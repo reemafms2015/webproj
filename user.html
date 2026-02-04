@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>User Page</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --primary-color: #FF9AA2;
+    --secondary-color: #FFB7B2;
+    --accent-color: #FFDAC1;
+    --green-color: #B5EAD7;
+    --blue-color: #C7CEEA;
+    --yellow-color: #FFE5B4;
+    --dark-color: #5D576B;
+    --light-color: #FFF9F5;
+    --border-radius: 16px;
+    --box-shadow: 0 8px 25px rgba(93, 87, 107, 0.1);
+    --transition: all 0.3s ease;
+}
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #FFDAC1 0%, #C7CEEA 100%);
+    color: var(--dark-color);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* ===== Site Header (NEW) ===== */
+.site-header {
+    background: linear-gradient(to right, var(--primary-color), var(--blue-color));
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.site-header h1 {
+    font-family: 'Comic Neue', cursive;
+    color: white;
+    font-size: 2.2rem;
+}
+
+.site-header nav a {
+    margin-left: 25px;
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.site-header nav a:hover,
+.site-header nav a.active {
+    color: var(--yellow-color);
+    border-bottom: 3px solid var(--yellow-color);
+}
+
+/* ===== Page Container ===== */
+.container {
+    max-width: 1100px;
+    margin: auto;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    border: 6px solid var(--yellow-color);
+    overflow: hidden;
+}
+
+/* ===== Original Page Header (UNCHANGED) ===== */
+header {
+    background: linear-gradient(to right, var(--primary-color), var(--blue-color));
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+header h1 {
+    font-family: 'Comic Neue', cursive;
+    font-size: 2.4rem;
+}
+
+.section {
+    padding: 30px;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background-color: var(--light-color);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    box-shadow: var(--box-shadow);
+}
+
+.center {
+    text-align: center;
+}
+
+/* Images */
+.profile-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid var(--green-color);
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+.recipe-img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 3px solid var(--accent-color);
+    object-fit: cover;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th {
+    background-color: var(--accent-color);
+    padding: 14px;
+    font-weight: 700;
+}
+
+td {
+    padding: 14px;
+    border-bottom: 2px solid var(--light-color);
+    text-align: center;
+}
+
+/* Links */
+a {
+    color: var(--dark-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+/* Buttons */
+.main-btn,
+.logout-btn {
+    background: linear-gradient(to right, var(--primary-color), var(--blue-color));
+    color: white;
+    padding: 14px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 15px;
+    transition: var(--transition);
+}
+
+.main-btn:hover,
+.logout-btn:hover {
+    transform: translateY(-3px);
+}
+
+/* ===== Site Footer (NEW) ===== */
+.site-footer {
+    background: var(--green-color);
+    padding: 25px;
+    text-align: center;
+    font-weight: 600;
+    margin-top: 40px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===== SITE HEADER ===== -->
+<div class="site-header">
+    <h1>LittleChefs</h1>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="user.html" class="active">Users</a>
+        <a href="admin.html">Admins</a>
+    </nav>
+</div>
+
+<!-- ===== ORIGINAL PAGE (UNCHANGED) ===== -->
+<div class="container">
+
+<header>
+    <h1>Welcome, Mom Sara 🌸</h1>
+</header>
+
+<div class="section">
+
+<div class="grid-2">
+    <div class="card center">
+        <img src="sara.png" class="profile-img">
+        <h3>Sara Ahmed</h3>
+        <p>sara@email.com</p>
+    </div>
+
+    <div class="card center">
+        <p><strong>Total Recipes</strong></p>
+        <h2>3</h2>
+
+        <p><strong>Total Likes</strong></p>
+        <h2>24</h2>
+
+        <a href="my-recipes.html" class="main-btn">🍽 My Recipes</a>
+    </div>
+</div>
+
+<div class="card">
+    <h2>All Recipes</h2>
+    <table>
+        <tr>
+            <th>Recipe</th>
+            <th>Photo</th>
+            <th>Creator</th>
+            <th>Likes</th>
+            <th>Category</th>
+        </tr>
+        <tr>
+            <td><a href="view-recipe.html">Banana Pancakes</a></td>
+            <td><img src="pancake.png" class="recipe-img"></td>
+            <td>Sara Ahmed</td>
+            <td>10</td>
+            <td>Morning Breakfast</td>
+        </tr>
+        <tr>
+            <td><a href="view-recipe.html">Chicken & Rice</a></td>
+            <td><img src="chicken-rice.png" class="recipe-img"></td>
+            <td>Lina Khaled</td>
+            <td>8</td>
+            <td>Main Meals</td>
+        </tr>
+        <tr>
+            <td><a href="view-recipe.html">Fruit Yogurt Cups</a></td>
+            <td><img src="yogurt.png" class="recipe-img"></td>
+            <td>Sara Ahmed</td>
+            <td>6</td>
+            <td>Healthy Treats</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Favorite Recipes ❤️</h2>
+    <table>
+        <tr>
+            <th>Recipe</th>
+            <th>Photo</th>
+            <th>Remove</th>
+        </tr>
+        <tr>
+            <td><a href="view-recipe.html">Chicken & Rice</a></td>
+            <td><img src="chicken-rice.png" class="recipe-img"></td>
+            <td><a href="user.html">Remove</a></td>
+        </tr>
+    </table>
+</div>
+
+<div class="center">
+    <a href="index.html" class="logout-btn">Sign Out</a>
+</div>
+
+</div>
+</div>
+
+<!-- ===== SITE FOOTER ===== -->
+<div class="site-footer">
+    © 2026 Kids Recipes — Made with 💖 for little ones
+</div>
+
+</body>
+</html>
