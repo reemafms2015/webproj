@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kids Recipes | Login</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #FF9AA2;
+      --secondary: #FFDAC1;
+      --mint: #B5EAD7;
+      --lavender: #C7CEEA;
+      --yellow: #FFE5B4;
+      --dark: #5D576B;
+      --white: #ffffff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(135deg, var(--secondary), var(--lavender));
+      color: var(--dark);
+    }
+
+    .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* =====================
+       Header
+    ===================== */
+    header {
+      background: linear-gradient(to right, var(--primary), var(--lavender));
+      padding: 15px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo {
+      width: 130px;
+      height: auto;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+    }
+
+    header h1 {
+      font-family: 'Comic Neue', cursive;
+      font-size: 2.4rem;
+      color: white;
+    }
+
+    nav a {
+      margin-left: 25px;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      cursor: pointer;
+      padding-bottom: 5px;
+      position: relative;
+    }
+
+    nav a:hover {
+      color: var(--yellow);
+    }
+
+    nav a.active {
+      color: var(--yellow);
+      border-bottom: 3px solid var(--yellow);
+    }
+
+    /* =====================
+       Main
+    ===================== */
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background: white;
+      width: 90%;
+      max-width: 520px;
+      padding: 50px 45px;
+      border-radius: 22px;
+      border: 10px solid var(--mint);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    }
+
+    .card h2 {
+      font-family: 'Comic Neue', cursive;
+      font-size: 2.4rem;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+
+    .card p {
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    label {
+      font-weight: 700;
+    }
+
+    input {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 2px solid var(--lavender);
+      font-size: 1rem;
+    }
+
+    .primary-btn {
+      background: linear-gradient(to right, var(--primary), var(--lavender));
+      color: white;
+      padding: 14px 20px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .primary-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .helper {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 1rem;
+    }
+
+    .helper a {
+      font-weight: 700;
+      color: var(--dark);
+      text-decoration: underline;
+    }
+
+    /* =====================
+       Footer
+    ===================== */
+    footer {
+      background: var(--mint);
+      padding: 25px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .logo {
+        width: 110px;
+      }
+
+      .card {
+        padding: 40px 25px;
+      }
+
+      .card h2 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <img src="photo.png" alt="Kids Recipes Logo" class="logo">
+      <h1>LittleChefs</h1>
+    </div>
+
+    <nav>
+      <a href="index.html">Home</a>
+      <a>Users</a>
+      <a>Admins</a>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main>
+    <section class="card">
+      <h2>Welcome Back</h2>
+      <p>Log in to save and share your favorite recipes.</p>
+
+      <form>
+        <div>
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@example.com" required>
+        </div>
+
+        <div>
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="Enter your password" required>
+        </div>
+
+        <button class="primary-btn" type="submit">Log In</button>
+      </form>
+
+      <div class="helper">
+        New here? <a href="signin.html">Create an account</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    © 2026 Kids Recipes — Made with 💖 for little ones
+  </footer>
+
+</div>
+
+</body>
+</html>
