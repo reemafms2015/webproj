@@ -76,7 +76,6 @@ body {
     overflow: hidden;
 }
 
-/* ===== Original Page Header (UNCHANGED) ===== */
 header {
     background: linear-gradient(to right, var(--primary-color), var(--blue-color));
     color: white;
@@ -178,6 +177,37 @@ a:hover {
 .logout-btn:hover {
     transform: translateY(-3px);
 }
+.creator-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent-color);
+    margin-bottom: 6px;
+}
+select {
+    padding: 12px 18px;
+    border-radius: 30px;
+    border: 2px solid var(--accent-color);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    background-color: white;
+    margin-right: 10px;
+}
+.select-btn {
+    background: linear-gradient(to right, var(--primary-color), var(--blue-color));
+    color: white;
+    padding: 14px 32px;
+    border-radius: 40px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.select-btn:hover {
+    transform: translateY(-3px);
+}
+
 
 /* ===== Site Footer (NEW) ===== */
 .site-footer {
@@ -203,15 +233,15 @@ a:hover {
 </div>
 
 <!-- ===== ORIGINAL PAGE (UNCHANGED) ===== -->
-<div class="container">
+    <div class="container">
 
-<header>
-    <h1>Welcome, Mom Sara 🌸</h1>
-</header>
+   <header>
+     <h1>Welcome, Mom Sara 🌸</h1>
+   </header>
 
-<div class="section">
+   <div class="section">
 
-<div class="grid-2">
+   <div class="grid-2">
     <div class="card center">
         <img src="sara.png" class="profile-img">
         <h3>Sara Ahmed</h3>
@@ -227,7 +257,17 @@ a:hover {
 
         <a href="my-recipes.html" class="main-btn">🍽 My Recipes</a>
     </div>
-</div>
+   </div>
+   <div class="filter-box">
+    <select>
+        <option>All Categories</option>
+        <option>Morning Breakfast</option>
+        <option>Main Meals</option>
+        <option>Healthy Treats</option>
+    </select>
+    <button class="select-btn">Filter</button>
+   </div>
+
 
 <div class="card">
     <h2>All Recipes</h2>
@@ -242,21 +282,29 @@ a:hover {
         <tr>
             <td><a href="view-recipe.html">Banana Pancakes</a></td>
             <td><img src="pancake.png" class="recipe-img"></td>
-            <td>Sara Ahmed</td>
+            <td><img src="sara.png" class="creator-img"><br>
+            Sara Ahmed
+            </td>
+
+
             <td>10</td>
             <td>Morning Breakfast</td>
         </tr>
         <tr>
             <td><a href="view-recipe.html">Chicken & Rice</a></td>
             <td><img src="chicken-rice.png" class="recipe-img"></td>
-            <td>Lina Khaled</td>
+            <td><img src="nora.png" class="creator-img"><br>
+            Nora Khaled
+            </td>
             <td>8</td>
             <td>Main Meals</td>
         </tr>
         <tr>
             <td><a href="view-recipe.html">Fruit Yogurt Cups</a></td>
             <td><img src="yogurt.png" class="recipe-img"></td>
-            <td>Sara Ahmed</td>
+            <td><img src="sara.png" class="creator-img"><br>
+            Sara Ahmed
+            </td>
             <td>6</td>
             <td>Healthy Treats</td>
         </tr>
