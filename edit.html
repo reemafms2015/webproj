@@ -187,7 +187,7 @@
         }
         
         .ingredient-row,
-        .step-row {
+        .instruction-row {
             display: flex;
             gap: 15px;
             margin-bottom: 15px;
@@ -195,7 +195,7 @@
         }
         
         .ingredient-name,
-        .step-number {
+        .instruction-number {
             flex: 2;
         }
         
@@ -203,7 +203,7 @@
             flex: 1;
         }
         
-        .step-content {
+        .instruction-content {
             flex: 3;
         }
         
@@ -247,7 +247,7 @@
             transform: translateY(-2px);
         }
         
-        .step-controls {
+        .instruction-controls {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -443,12 +443,12 @@
         
         @media (max-width: 768px) {
             .ingredient-row,
-            .step-row {
+            .instruction-row {
                 flex-direction: column;
                 gap: 15px;
             }
             
-            .step-controls {
+            .instruction-controls {
                 width: 100%;
                 justify-content: flex-start;
                 padding-top: 0;
@@ -507,7 +507,7 @@
         }
         
         .ingredient-row,
-        .step-row {
+        .instruction-row {
             animation: fadeInUp 0.4s ease-out;
         }
         
@@ -540,51 +540,6 @@
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
-        }
-        
-        .floating-icon:hover {
-            transform: scale(1.1) rotate(15deg);
-        }
-        
-        .age-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .age-option {
-            position: relative;
-        }
-        
-        .age-option input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .age-option label {
-            display: block;
-            padding: 15px 10px;
-            background-color: #FFFCF9;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
-            border: 2px solid var(--accent-color);
-            font-weight: 500;
-        }
-        
-        .age-option input[type="radio"]:checked + label {
-            border-color: var(--primary-color);
-            background-color: rgba(255, 154, 162, 0.1);
-            color: var(--primary-color);
-            box-shadow: 0 4px 0 var(--primary-color);
-        }
-        
-        .age-option label:hover {
-            transform: translateY(-3px);
         }
         
         .current-image {
@@ -626,35 +581,63 @@
             background-color: var(--primary-color);
             color: white;
         }
+        
+        /* Likes Section */
+        .likes-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--light-color);
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid var(--accent-color);
+        }
+        
+        .likes-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .likes-input {
+            padding: 12px 18px;
+            border: 2px solid var(--accent-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            width: 150px;
+            text-align: center;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-edit"></i> Edit Kids Recipe</h1>
-            <p>Update your fun recipe for little chefs! 🧒🍕🥦</p>
+            <h1><i class="fas fa-edit"></i> Edit Recipe</h1>
+            <p>Update your recipe details and make it even better! ✨</p>
         </header>
         
         <div class="success-message" id="successMessage">
             <i class="fas fa-check-circle"></i>
-            <span>Recipe updated successfully! 🎉</span>
+            <span id="successText">Recipe updated successfully! 🎉</span>
         </div>
         
         <form class="recipe-form" id="recipeForm">
             <!-- Section 1: Basic Information -->
             <div class="form-section">
-                <h2 class="section-title"><i class="fas fa-info-circle"></i> Recipe Info</h2>
+                <h2 class="section-title"><i class="fas fa-info-circle"></i> Recipe Information</h2>
                 
                 <div class="form-group">
                     <label for="recipeName">Recipe Name <span class="required">*</span></label>
-                    <input type="text" id="recipeName" name="recipeName" value="Banana pancakes" required>
-                    <div class="counter"><span id="nameCount">23</span>/50 characters</div>
+                    <input type="text" id="recipeName" name="recipeName" value="Banana Pancakes 🥞" required>
+                    <div class="counter"><span id="nameCount">18</span>/50 characters</div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="recipeCategory">Meal Type <span class="required">*</span></label>
+                    <label for="recipeCategory">Recipe Category <span class="required">*</span></label>
                     <select id="recipeCategory" name="recipeCategory" required>
-                        <option value="">Select meal type</option>
+                        <option value="">Select a category</option>
                         <option value="breakfast" selected>Breakfast</option>
                         <option value="lunch">Lunch</option>
                         <option value="dinner">Dinner</option>
@@ -665,41 +648,25 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Age Group <span class="required">*</span></label>
-                    <div class="age-group">
-                        <div class="age-option">
-                            <input type="radio" id="age1-3" name="ageGroup" value="1-3" required>
-                            <label for="age1-3">1-3 years 👶</label>
-                        </div>
-                        <div class="age-option">
-                            <input type="radio" id="age4-6" name="ageGroup" value="4-6" checked>
-                            <label for="age4-6">4-6 years 🧒</label>
-                        </div>
-                        <div class="age-option">
-                            <input type="radio" id="age7-9" name="ageGroup" value="7-9">
-                            <label for="age7-9">7-9 years 👦👧</label>
-                        </div>
-                        <div class="age-option">
-                            <input type="radio" id="age10+" name="ageGroup" value="10+">
-                            <label for="age10+">10+ years 🧑</label>
-                        </div>
-                    </div>
+                    <label for="recipeDescription">Recipe Description <span class="required">*</span></label>
+                    <textarea id="recipeDescription" name="recipeDescription" required>Fluffy banana pancakes that kids love! Perfect for weekend breakfast.</textarea>
+                    <div class="counter"><span id="descCount">68</span>/200 characters</div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="recipeDescription">Fun Description <span class="required">*</span></label>
-                    <textarea id="recipeDescription" name="recipeDescription" required>Colorful fruit skewers that look like rainbows! A perfect hea</textarea>
-                    <div class="counter"><span id="descCount">96</span>/200 characters</div>
+                <div class="likes-section">
+                    <label class="likes-label">Likes Count</label>
+                    <input type="number" class="likes-input" id="likesCount" name="likesCount" value="10" min="0">
                 </div>
             </div>
             
             <!-- Section 2: Recipe Image -->
             <div class="form-section">
-                <h2 class="section-title"><i class="fas fa-camera"></i> Recipe Picture</h2>
+                <h2 class="section-title"><i class="fas fa-camera"></i> Recipe Image</h2>
                 
                 <div class="current-image">
                     <p><strong>Current Image:</strong></p>
-                    <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufD>
+                    <img src="banana-pancakes.png" alt="Banana Pancakes">
+                    <p><small><i>Banana Pancakes</i> 👩‍🍳</small></p>
                     <div class="image-actions">
                         <button type="button" class="change-image-btn" id="changeImageBtn">
                             <i class="fas fa-exchange-alt"></i> Change Image
@@ -714,7 +681,7 @@
                     <label>Upload New Recipe Image <span class="required">*</span></label>
                     <div class="upload-area" id="uploadArea">
                         <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Drag & drop or click to upload a new fun picture! 📸</p>
+                        <p>Drag & drop or click to upload new image</p>
                         <span>Max size: 5MB (JPG, PNG, GIF, WebP)</span>
                     </div>
                     <input type="file" id="recipeImage" name="recipeImage" accept="image/*" style="display: none;">
@@ -730,27 +697,27 @@
                     <div class="ingredient-row">
                         <div class="form-group ingredient-name">
                             <label>Ingredient Name <span class="required">*</span></label>
-                            <input type="text" name="ingredientName[]" value="Strawberries 🍓" required>
+                            <input type="text" name="ingredientName[]" value="Banana (mashed) 🍌" required>
                         </div>
                         
                         <div class="form-group ingredient-amount">
                             <label>Amount <span class="required">*</span></label>
-                            <input type="text" name="ingredientAmount[]" value="5-6 pieces" required>
+                            <input type="text" name="ingredientAmount[]" value="1 large" required>
                         </div>
                     </div>
                     
                     <div class="ingredient-row">
                         <div class="form-group ingredient-name">
                             <label>Ingredient Name <span class="required">*</span></label>
-                            <input type="text" name="ingredientName[]" value="Pineapple chunks 🍍" required>
+                            <input type="text" name="ingredientName[]" value="Egg 🥚" required>
                         </div>
                         
                         <div class="form-group ingredient-amount">
                             <label>Amount <span class="required">*</span></label>
-                            <input type="text" name="ingredientAmount[]" value="5-6 pieces" required>
+                            <input type="text" name="ingredientAmount[]" value="1" required>
                         </div>
                         
-                        <div class="step-controls">
+                        <div class="instruction-controls">
                             <button type="button" class="remove-btn remove-ingredient">
                                 <i class="fas fa-trash"></i> Remove
                             </button>
@@ -760,15 +727,33 @@
                     <div class="ingredient-row">
                         <div class="form-group ingredient-name">
                             <label>Ingredient Name <span class="required">*</span></label>
-                            <input type="text" name="ingredientName[]" value="Green grapes 🍇" required>
+                            <input type="text" name="ingredientName[]" value="Oats" required>
                         </div>
                         
                         <div class="form-group ingredient-amount">
                             <label>Amount <span class="required">*</span></label>
-                            <input type="text" name="ingredientAmount[]" value="5-6 pieces" required>
+                            <input type="text" name="ingredientAmount[]" value="1/2 cup" required>
                         </div>
                         
-                        <div class="step-controls">
+                        <div class="instruction-controls">
+                            <button type="button" class="remove-btn remove-ingredient">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="ingredient-row">
+                        <div class="form-group ingredient-name">
+                            <label>Ingredient Name <span class="required">*</span></label>
+                            <input type="text" name="ingredientName[]" value="Cinnamon" required>
+                        </div>
+                        
+                        <div class="form-group ingredient-amount">
+                            <label>Amount <span class="required">*</span></label>
+                            <input type="text" name="ingredientAmount[]" value="1/4 tsp" required>
+                        </div>
+                        
+                        <div class="instruction-controls">
                             <button type="button" class="remove-btn remove-ingredient">
                                 <i class="fas fa-trash"></i> Remove
                             </button>
@@ -781,68 +766,86 @@
                 </button>
             </div>
             
-            <!-- Section 4: Preparation Steps -->
+            <!-- Section 4: Instructions -->
             <div class="form-section">
-                <h2 class="section-title"><i class="fas fa-list-ol"></i> Fun Steps</h2>
+                <h2 class="section-title"><i class="fas fa-list-ol"></i> Instructions</h2>
                 
-                <div id="stepsContainer">
-                    <div class="step-row">
-                        <div class="form-group step-number">
-                            <label>Step #<span class="step-counter">1</span></label>
-                            <input type="text" name="stepTitle[]" value="Wash fruits">
+                <div id="instructionsContainer">
+                    <div class="instruction-row">
+                        <div class="form-group instruction-number">
+                            <label>Step #<span class="instruction-counter">1</span></label>
+                            <input type="text" name="instructionTitle[]" value="Mash Banana">
                         </div>
                         
-                        <div class="form-group step-content">
-                            <label>Step Description <span class="required">*</span></label>
-                            <textarea name="stepDescription[]" rows="2" required>Wash all the fruits with clean water. Ask an adult for help if needed! 💦</textarea>
+                        <div class="form-group instruction-content">
+                            <label>Instruction Description <span class="required">*</span></label>
+                            <textarea name="instructionDescription[]" rows="2" required>Mash the banana in a bowl until smooth.</textarea>
                         </div>
                         
-                        <div class="step-controls">
-                            <button type="button" class="remove-btn remove-step">
+                        <div class="instruction-controls">
+                            <button type="button" class="remove-btn remove-instruction">
                                 <i class="fas fa-trash"></i> Remove
                             </button>
                         </div>
                     </div>
                     
-                    <div class="step-row">
-                        <div class="form-group step-number">
-                            <label>Step #<span class="step-counter">2</span></label>
-                            <input type="text" name="stepTitle[]" value="Cut fruits">
+                    <div class="instruction-row">
+                        <div class="form-group instruction-number">
+                            <label>Step #<span class="instruction-counter">2</span></label>
+                            <input type="text" name="instructionTitle[]" value="Add Egg">
                         </div>
                         
-                        <div class="form-group step-content">
-                            <label>Step Description <span class="required">*</span></label>
-                            <textarea name="stepDescription[]" rows="2" required>Cut fruits into bite-sized pieces. Adults should help with cutting! 🔪</textarea>
+                        <div class="form-group instruction-content">
+                            <label>Instruction Description <span class="required">*</span></label>
+                            <textarea name="instructionDescription[]" rows="2" required>Add the egg and mix well.</textarea>
                         </div>
                         
-                        <div class="step-controls">
-                            <button type="button" class="remove-btn remove-step">
+                        <div class="instruction-controls">
+                            <button type="button" class="remove-btn remove-instruction">
                                 <i class="fas fa-trash"></i> Remove
                             </button>
                         </div>
                     </div>
                     
-                    <div class="step-row">
-                        <div class="form-group step-number">
-                            <label>Step #<span class="step-counter">3</span></label>
-                            <input type="text" name="stepTitle[]" value="Make rainbow pattern">
+                    <div class="instruction-row">
+                        <div class="form-group instruction-number">
+                            <label>Step #<span class="instruction-counter">3</span></label>
+                            <input type="text" name="instructionTitle[]" value="Mix Ingredients">
                         </div>
                         
-                        <div class="form-group step-content">
-                            <label>Step Description <span class="required">*</span></label>
-                            <textarea name="stepDescription[]" rows="2" required>Thread fruits onto skewers in rainbow order: strawberry, pineapple, grape, blueberry, etc. 🌈</textarea>
+                        <div class="form-group instruction-content">
+                            <label>Instruction Description <span class="required">*</span></label>
+                            <textarea name="instructionDescription[]" rows="2" required>Add oats and cinnamon and stir until combined.</textarea>
                         </div>
                         
-                        <div class="step-controls">
-                            <button type="button" class="remove-btn remove-step">
+                        <div class="instruction-controls">
+                            <button type="button" class="remove-btn remove-instruction">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="instruction-row">
+                        <div class="form-group instruction-number">
+                            <label>Step #<span class="instruction-counter">4</span></label>
+                            <input type="text" name="instructionTitle[]" value="Cook Pancakes">
+                        </div>
+                        
+                        <div class="form-group instruction-content">
+                            <label>Instruction Description <span class="required">*</span></label>
+                            <textarea name="instructionDescription[]" rows="2" required>Cook small pancakes on a non-stick pan until golden brown on both sides.</textarea>
+                        </div>
+                        
+                        <div class="instruction-controls">
+                            <button type="button" class="remove-btn remove-instruction">
                                 <i class="fas fa-trash"></i> Remove
                             </button>
                         </div>
                     </div>
                 </div>
                 
-                <button type="button" class="add-btn" id="addStep">
-                    <i class="fas fa-plus"></i> Add Another Step
+                <button type="button" class="add-btn" id="addInstruction">
+                    <i class="fas fa-plus"></i> Add Another Instruction
                 </button>
             </div>
             
@@ -852,12 +855,12 @@
                 
                 <div class="video-options">
                     <div class="video-option">
-                        <input type="radio" id="videoNone" name="videoOption" value="none">
+                        <input type="radio" id="videoNone" name="videoOption" value="none" checked>
                         <label for="videoNone"><i class="fas fa-times-circle"></i> No Video</label>
                     </div>
                     
                     <div class="video-option">
-                        <input type="radio" id="videoURL" name="videoOption" value="url" checked>
+                        <input type="radio" id="videoURL" name="videoOption" value="url">
                         <label for="videoURL"><i class="fas fa-link"></i> Video Link</label>
                     </div>
                     
@@ -867,10 +870,10 @@
                     </div>
                 </div>
                 
-                <div class="video-input active" id="urlInput">
+                <div class="video-input" id="urlInput">
                     <div class="form-group">
                         <label for="videoUrl">Video URL</label>
-                        <input type="url" id="videoUrl" name="videoUrl" value="https://www.youtube.com/watch?v=example123">
+                        <input type="url" id="videoUrl" name="videoUrl" placeholder="https://www.youtube.com/watch?v=...">
                     </div>
                 </div>
                 
@@ -898,68 +901,133 @@
         </form>
     </div>
     
-    <a href="#" class="floating-icon" id="topBtn">
-        <i class="fas fa-arrow-up"></i>
+    <a href="recipes-list.html" class="floating-icon">
+        <i class="fas fa-list"></i>
     </a>
 
     <script>
-        // Main elements
+        // ==================== معالجة النموذج ====================
         const recipeForm = document.getElementById('recipeForm');
         const successMessage = document.getElementById('successMessage');
-        const ingredientsContainer = document.getElementById('ingredientsContainer');
-        const stepsContainer = document.getElementById('stepsContainer');
-        const addIngredientBtn = document.getElementById('addIngredient');
-        const addStepBtn = document.getElementById('addStep');
-        const uploadArea = document.getElementById('uploadArea');
-        const recipeImage = document.getElementById('recipeImage');
-        const fileNameDisplay = document.getElementById('file-name');
-        const topBtn = document.getElementById('topBtn');
-        const changeImageBtn = document.getElementById('changeImageBtn');
-        const removeImageBtn = document.getElementById('removeImageBtn');
-        const uploadSection = document.getElementById('uploadSection');
-        const cancelBtn = document.getElementById('cancelBtn');
+        const successText = document.getElementById('successText');
         
-        // Character counters
+        // Counters
         const nameCount = document.getElementById('nameCount');
         const descCount = document.getElementById('descCount');
         const recipeNameInput = document.getElementById('recipeName');
         const recipeDescInput = document.getElementById('recipeDescription');
         
-        // Video options
-        const videoOptions = document.querySelectorAll('input[name="videoOption"]');
-        const urlInput = document.getElementById('urlInput');
-        const uploadInput = document.getElementById('uploadInput');
-        
-        // Initialize counters with current values
-        nameCount.textContent = recipeNameInput.value.length;
-        descCount.textContent = recipeDescInput.value.length;
-        
-        // Character counter for recipe name
         recipeNameInput.addEventListener('input', function() {
             nameCount.textContent = this.value.length;
             nameCount.style.color = this.value.length > 50 ? '#FF9AA2' : '#B5EAD7';
         });
         
-        // Character counter for recipe description
         recipeDescInput.addEventListener('input', function() {
             descCount.textContent = this.value.length;
             descCount.style.color = this.value.length > 200 ? '#FF9AA2' : '#B5EAD7';
         });
         
-        // Change image button
-        changeImageBtn.addEventListener('click', function() {
-            uploadSection.style.display = 'block';
+        // Ingredients
+        let ingredientCount = 4;
+        const ingredientsContainer = document.getElementById('ingredientsContainer');
+        const addIngredientBtn = document.getElementById('addIngredient');
+        
+        addIngredientBtn.addEventListener('click', function() {
+            ingredientCount++;
+            
+            const newIngredientRow = document.createElement('div');
+            newIngredientRow.className = 'ingredient-row';
+            newIngredientRow.innerHTML = `
+                <div class="form-group ingredient-name">
+                    <label>Ingredient Name <span class="required">*</span></label>
+                    <input type="text" name="ingredientName[]" placeholder="e.g., Honey 🍯" required>
+                </div>
+                
+                <div class="form-group ingredient-amount">
+                    <label>Amount <span class="required">*</span></label>
+                    <input type="text" name="ingredientAmount[]" placeholder="e.g., 1 tbsp" required>
+                </div>
+                
+                <div class="instruction-controls">
+                    <button type="button" class="remove-btn remove-ingredient">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            `;
+            
+            ingredientsContainer.appendChild(newIngredientRow);
+            
+            newIngredientRow.querySelector('.remove-ingredient').addEventListener('click', function() {
+                ingredientsContainer.removeChild(newIngredientRow);
+                ingredientCount--;
+            });
         });
         
-        // Remove image button
-        removeImageBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to remove the current image?')) {
-                document.querySelector('.current-image').style.display = 'none';
-                uploadSection.style.display = 'block';
+        // Instructions
+        let instructionCount = 4;
+        const instructionsContainer = document.getElementById('instructionsContainer');
+        const addInstructionBtn = document.getElementById('addInstruction');
+        
+        addInstructionBtn.addEventListener('click', function() {
+            instructionCount++;
+            
+            const newInstructionRow = document.createElement('div');
+            newInstructionRow.className = 'instruction-row';
+            newInstructionRow.innerHTML = `
+                <div class="form-group instruction-number">
+                    <label>Step #<span class="instruction-counter">${instructionCount}</span></label>
+                    <input type="text" name="instructionTitle[]" placeholder="Step title (optional)">
+                </div>
+                
+                <div class="form-group instruction-content">
+                    <label>Instruction Description <span class="required">*</span></label>
+                    <textarea name="instructionDescription[]" placeholder="Write detailed instructions..." rows="2" required></textarea>
+                </div>
+                
+                <div class="instruction-controls">
+                    <button type="button" class="remove-btn remove-instruction">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            `;
+            
+            instructionsContainer.appendChild(newInstructionRow);
+            
+            newInstructionRow.querySelector('.remove-instruction').addEventListener('click', function() {
+                instructionsContainer.removeChild(newInstructionRow);
+                instructionCount--;
+                updateInstructionNumbers();
+            });
+            
+            if (instructionCount > 1) {
+                document.querySelectorAll('.remove-instruction')[0].style.display = 'block';
             }
         });
         
-        // Recipe image upload with drag & drop
+        function updateInstructionNumbers() {
+            const instructionCounters = document.querySelectorAll('.instruction-counter');
+            instructionCounters.forEach((counter, index) => {
+                counter.textContent = index + 1;
+            });
+        }
+        
+        // Image Actions
+        document.getElementById('changeImageBtn').addEventListener('click', function() {
+            document.getElementById('uploadSection').style.display = 'block';
+        });
+        
+        document.getElementById('removeImageBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to remove the current image?')) {
+                document.querySelector('.current-image').style.display = 'none';
+                document.getElementById('uploadSection').style.display = 'block';
+            }
+        });
+        
+        // Image Upload
+        const uploadArea = document.getElementById('uploadArea');
+        const recipeImage = document.getElementById('recipeImage');
+        const fileNameDisplay = document.getElementById('file-name');
+        
         uploadArea.addEventListener('click', function() {
             recipeImage.click();
         });
@@ -970,118 +1038,26 @@
                 fileNameDisplay.innerHTML = `<i class="fas fa-check-circle"></i> Selected: <strong>${fileName}</strong>`;
                 uploadArea.style.borderColor = '#B5EAD7';
                 uploadArea.style.backgroundColor = 'rgba(181, 234, 215, 0.1)';
-            } else {
-                fileNameDisplay.textContent = '';
-                uploadArea.style.borderColor = '#FFDAC1';
-                uploadArea.style.backgroundColor = '#FFFCF9';
             }
         });
         
-        // Drag and drop functionality
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.classList.add('dragover');
-        });
+        // Video Options
+        const videoOptions = document.querySelectorAll('input[name="videoOption"]');
+        const urlInput = document.getElementById('urlInput');
+        const uploadInput = document.getElementById('uploadInput');
         
-        uploadArea.addEventListener('dragleave', function() {
-            this.classList.remove('dragover');
-        });
-        
-        uploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                recipeImage.files = e.dataTransfer.files;
-                const fileName = e.dataTransfer.files[0].name;
-                fileNameDisplay.innerHTML = `<i class="fas fa-check-circle"></i> Selected: <strong>${fileName}</strong>`;
-                uploadArea.style.borderColor = '#B5EAD7';
-                uploadArea.style.backgroundColor = 'rgba(181, 234, 215, 0.1)';
-            }
-        });
-        
-        // Add new ingredient
-        let ingredientCount = 3;
-        
-        addIngredientBtn.addEventListener('click', function() {
-            ingredientCount++;
-            
-            const newIngredientRow = document.createElement('div');
-            newIngredientRow.className = 'ingredient-row';
-            newIngredientRow.innerHTML = `
-                <div class="form-group ingredient-name">
-                    <label>Ingredient Name <span class="required">*</span></label>
-                    <input type="text" name="ingredientName[]" placeholder="e.g., Cheese 🧀" required>
-                </div>
+        videoOptions.forEach(option => {
+            option.addEventListener('change', function() {
+                urlInput.classList.remove('active');
+                uploadInput.classList.remove('active');
                 
-                <div class="form-group ingredient-amount">
-                    <label>Amount <span class="required">*</span></label>
-                    <input type="text" name="ingredientAmount[]" placeholder="e.g., 2 slices" required>
-                </div>
-                
-                <div class="step-controls">
-                    <button type="button" class="remove-btn remove-ingredient">
-                        <i class="fas fa-trash"></i> Remove
-                    </button>
-                </div>
-            `;
-            
-            ingredientsContainer.appendChild(newIngredientRow);
-            
-            // Add event for removing the ingredient
-            const removeBtn = newIngredientRow.querySelector('.remove-ingredient');
-            removeBtn.addEventListener('click', function() {
-                ingredientsContainer.removeChild(newIngredientRow);
-                ingredientCount--;
+                if (this.value === 'url') {
+                    urlInput.classList.add('active');
+                } else if (this.value === 'upload') {
+                    uploadInput.classList.add('active');
+                }
             });
         });
-        
-        // Add new step
-        let stepCount = 3;
-        
-        addStepBtn.addEventListener('click', function() {
-            stepCount++;
-            
-            const newStepRow = document.createElement('div');
-            newStepRow.className = 'step-row';
-            newStepRow.innerHTML = `
-                <div class="form-group step-number">
-                    <label>Step #<span class="step-counter">${stepCount}</span></label>
-                    <input type="text" name="stepTitle[]" placeholder="Step title (optional)">
-                </div>
-                
-                <div class="form-group step-content">
-                    <label>Step Description <span class="required">*</span></label>
-                    <textarea name="stepDescription[]" placeholder="Write step in a fun way for kids! 🎯" rows="2" required></textarea>
-                </div>
-                
-                <div class="step-controls">
-                    <button type="button" class="remove-btn remove-step">
-                        <i class="fas fa-trash"></i> Remove
-                    </button>
-                </div>
-            `;
-            
-            stepsContainer.appendChild(newStepRow);
-            
-            // Add event for removing the step
-            const removeBtn = newStepRow.querySelector('.remove-step');
-            removeBtn.addEventListener('click', function() {
-                stepsContainer.removeChild(newStepRow);
-                stepCount--;
-                
-                // Update remaining step numbers
-                updateStepNumbers();
-            });
-        });
-        
-        // Update step numbers
-        function updateStepNumbers() {
-            const stepCounters = document.querySelectorAll('.step-counter');
-            stepCounters.forEach((counter, index) => {
-                counter.textContent = index + 1;
-            });
-        }
         
         // Remove existing ingredients
         document.querySelectorAll('.remove-ingredient').forEach(btn => {
@@ -1094,95 +1070,86 @@
             });
         });
         
-        // Remove existing steps
-        document.querySelectorAll('.remove-step').forEach(btn => {
+        // Remove existing instructions
+        document.querySelectorAll('.remove-instruction').forEach(btn => {
             btn.addEventListener('click', function() {
-                const stepRow = this.closest('.step-row');
-                if (stepRow && stepCount > 1) {
-                    stepsContainer.removeChild(stepRow);
-                    stepCount--;
-                    
-                    // Update remaining step numbers
-                    updateStepNumbers();
+                const instructionRow = this.closest('.instruction-row');
+                if (instructionRow && instructionCount > 1) {
+                    instructionsContainer.removeChild(instructionRow);
+                    instructionCount--;
+                    updateInstructionNumbers();
                 }
             });
         });
         
-        // Show/hide video fields based on selection
-        videoOptions.forEach(option => {
-            option.addEventListener('change', function() {
-                // Hide all video inputs first
-                urlInput.classList.remove('active');
-                uploadInput.classList.remove('active');
-                
-                // Show the selected input
-                if (this.value === 'url') {
-                    urlInput.classList.add('active');
-                } else if (this.value === 'upload') {
-                    uploadInput.classList.add('active');
-                }
-            });
-        });
-        
-        // Form submission
+        // Form Submission
         recipeForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Here you would typically send data to a server
-            // For this demo, we'll just show a success message
+            const recipeData = {
+                name: document.getElementById('recipeName').value,
+                category: document.getElementById('recipeCategory').value,
+                description: document.getElementById('recipeDescription').value,
+                likes: parseInt(document.getElementById('likesCount').value) || 0,
+                
+                ingredients: [],
+                instructions: [],
+                
+                videoOption: document.querySelector('input[name="videoOption"]:checked')?.value || 'none',
+                videoUrl: document.getElementById('videoUrl')?.value || ''
+            };
             
-            // Show success message with fun animation
+            // Collect ingredients
+            document.querySelectorAll('.ingredient-row').forEach(row => {
+                const nameInput = row.querySelector('input[name="ingredientName[]"]');
+                const amountInput = row.querySelector('input[name="ingredientAmount[]"]');
+                
+                if (nameInput && amountInput && nameInput.value && amountInput.value) {
+                    recipeData.ingredients.push({
+                        name: nameInput.value,
+                        amount: amountInput.value
+                    });
+                }
+            });
+            
+            // Collect instructions
+            document.querySelectorAll('.instruction-row').forEach((row, index) => {
+                const titleInput = row.querySelector('input[name="instructionTitle[]"]');
+                const descTextarea = row.querySelector('textarea[name="instructionDescription[]"]');
+                
+                if (descTextarea && descTextarea.value) {
+                    recipeData.instructions.push({
+                        number: index + 1,
+                        title: titleInput ? titleInput.value : '',
+                        description: descTextarea.value
+                    });
+                }
+            });
+            
+            // Show success message
+            successText.textContent = `Recipe "${recipeData.name}" updated with ${recipeData.likes} likes! 🎉`;
             recipeForm.style.display = 'none';
             successMessage.style.display = 'flex';
-            successMessage.innerHTML = `
-                <i class="fas fa-check-circle"></i>
-                <span>Recipe updated successfully! 🎉<br><small>Your changes have been saved!</small></span>
-            `;
             
-            // Reset form after 4 seconds
-            setTimeout(function() {
-                recipeForm.style.display = 'block';
-                successMessage.style.display = 'none';
-                
-                // Update the counters
-                nameCount.textContent = recipeNameInput.value.length;
-                descCount.textContent = recipeDescInput.value.length;
-                
-            }, 4000);
+            setTimeout(() => {
+                window.location.href = 'recipes-list.html';
+            }, 3000);
         });
         
-        // Form reset (reset to original values)
+        // Reset Button
         document.getElementById('resetBtn').addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Confirm reset
-            if (confirm('Are you sure you want to reset all changes? Your edits will be lost!')) {
-                // Reset form fields to original values
-                recipeNameInput.value = "Rainbow Fruit Skewers 🍓🌈";
+            if (confirm('Are you sure you want to reset all changes to original values?')) {
+                // Reset to original values
+                document.getElementById('recipeName').value = "Banana Pancakes 🥞";
                 document.getElementById('recipeCategory').value = "breakfast";
-                document.querySelector('input[name="ageGroup"][value="4-6"]').checked = true;
-                recipeDescInput.value = "Colorful fruit skewers that look like rainbows! A perfect healthy snack that kids can help make. 🎨✨";
-                document.getElementById('videoUrl').value = "https://www.youtube.com/watch?v=example123";
-                document.querySelector('input[name="videoOption"][value="url"]').checked = true;
+                document.getElementById('recipeDescription').value = "Fluffy banana pancakes that kids love! Perfect for weekend breakfast.";
+                document.getElementById('likesCount').value = "10";
                 
                 // Update counters
-                nameCount.textContent = recipeNameInput.value.length;
-                descCount.textContent = recipeDescInput.value.length;
-                
-                // Show video URL input
-                urlInput.classList.add('active');
-                uploadInput.classList.remove('active');
-                
-                // Hide upload section if visible
-                uploadSection.style.display = 'none';
-                
-                // Reset image display
-                document.querySelector('.current-image').style.display = 'block';
-                
-                // Reset file name display
-                fileNameDisplay.textContent = '';
-                uploadArea.style.borderColor = '#FFDAC1';
-                uploadArea.style.backgroundColor = '#FFFCF9';
+                nameCount.textContent = "Banana Pancakes 🥞".length;
+                descCount.textContent = "Fluffy banana pancakes that kids love! Perfect for weekend breakfast.".length;
                 
                 // Show success message
                 const resetMessage = document.createElement('div');
@@ -1195,74 +1162,18 @@
                 
                 recipeForm.insertBefore(resetMessage, recipeForm.firstChild);
                 
-                // Remove message after 3 seconds
-                setTimeout(function() {
+                setTimeout(() => {
                     resetMessage.remove();
                 }, 3000);
             }
         });
         
-        // Cancel button
-        cancelBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to cancel editing? Any unsaved changes will be lost!')) {
-                // In a real app, this would redirect back to the recipe list or details page
-                // For this demo, we'll just show a message
-                const cancelMessage = document.createElement('div');
-                cancelMessage.className = 'success-message';
-                cancelMessage.style.display = 'flex';
-                cancelMessage.style.backgroundColor = 'rgba(255, 154, 162, 0.2)';
-                cancelMessage.style.borderColor = 'var(--primary-color)';
-                cancelMessage.innerHTML = `
-                    <i class="fas fa-times-circle"></i>
-                    <span>Editing cancelled! Redirecting to recipe list... 🔄</span>
-                `;
-                
-                recipeForm.insertBefore(cancelMessage, recipeForm.firstChild);
-                
-                // Redirect after 2 seconds (simulated)
-                setTimeout(function() {
-                    cancelMessage.innerHTML = `
-                        <i class="fas fa-times-circle"></i>
-                        <span>Editing cancelled! (In a real app, this would redirect) 🔄</span>
-                    `;
-                    
-                    // Remove message after 3 more seconds
-                    setTimeout(function() {
-                        cancelMessage.remove();
-                    }, 3000);
-                }, 2000);
+        // Cancel Button
+        document.getElementById('cancelBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to cancel editing?')) {
+                window.location.href = 'recipes-list.html';
             }
-        });
-        
-        // Back to top button
-        window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                topBtn.style.display = 'flex';
-            } else {
-                topBtn.style.display = 'none';
-            }
-        });
-        
-        topBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-        
-        // Add some fun hover effects to form sections
-        document.querySelectorAll('.form-section').forEach(section => {
-            section.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-5px)';
-            });
-            
-            section.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
         });
     </script>
 </body>
-</html>
-
 </html>
