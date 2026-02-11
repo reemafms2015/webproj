@@ -1092,27 +1092,26 @@
     });
   });
 
-  // Form Submission
-  recipeForm.addEventListener('submit', function(e) {
-    e.preventDefault();
+ // في قسم JavaScript تبع صفحة Edit Recipe، غير الكود هذا:
 
-    const recipeData = {
-      name: document.getElementById('recipeName').value,
-      category: document.getElementById('recipeCategory').value,
-      description: document.getElementById('recipeDescription').value,
-      likes: parseInt(document.getElementById('likesCount').value) || 0,
-      videoOption: document.querySelector('input[name="videoOption"]:checked')?.value || 'none',
-      videoUrl: document.getElementById('videoUrl')?.value || ''
-    };
+// Form Submission
+recipeForm.addEventListener('submit', function(e) {
+  e.preventDefault();
 
-    successText.textContent = `Recipe "${recipeData.name}" updated with ${recipeData.likes} likes! 🎉`;
-    recipeForm.style.display = 'none';
-    successMessage.style.display = 'flex';
+  const recipeData = {
+    name: document.getElementById('recipeName').value,
+    // ... باقي البيانات
+  };
 
-    setTimeout(() => {
-      window.location.href = 'recipes-list.html';
-    }, 3000);
-  });
+  successText.textContent = `Recipe "${recipeData.name}" updated with ${recipeData.likes} likes! 🎉`;
+  recipeForm.style.display = 'none';
+  successMessage.style.display = 'flex';
+  
+  // بعد ثانيتين يروح لصفحة الوصفات
+  setTimeout(() => {
+    window.location.href = 'my-recipes.html';
+  }, 2000);
+});
 
   // Reset Button
   document.getElementById('resetBtn').addEventListener('click', function(e) {
@@ -1146,3 +1145,4 @@
 
 </body>
 </html>
+
