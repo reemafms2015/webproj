@@ -942,16 +942,23 @@
   });
   
   // Form submission
-  recipeForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    recipeForm.style.display = 'none';
-    successMessage.style.display = 'flex';
-    successMessage.innerHTML = `
-      <i class="fas fa-check-circle"></i>
-      <span>Yay! Recipe saved successfully! 🎉<br><small>Kids will love this recipe!</small></span>
-    `;
-    
+recipeForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const recipeData = {
+    name: document.getElementById('recipeName').value,
+    // ... باقي البيانات
+  };
+
+  successText.textContent = `Recipe "${recipeData.name}" updated with ${recipeData.likes} likes! 🎉`;
+  recipeForm.style.display = 'none';
+  successMessage.style.display = 'flex';
+  
+  // بعد ثانيتين يروح لصفحة الوصفات
+  setTimeout(() => {
+    window.location.href = 'my-recipes.html';
+  }, 2000);
+});
     setTimeout(function() {
       recipeForm.reset();
       recipeForm.style.display = 'block';
@@ -1057,7 +1064,6 @@
     }
   });
   
-  // Function for active nav (من كود صديقتك)
   function setActive(element) {
     const links = document.querySelectorAll("nav a");
     links.forEach(link => link.classList.remove("active"));
@@ -1067,3 +1073,4 @@
 
 </body>
 </html>
+
