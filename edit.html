@@ -1092,9 +1092,7 @@
     });
   });
 
- // في قسم JavaScript تبع صفحة Edit Recipe، غير الكود هذا:
-
-// Form Submission
+  // Form submission
 recipeForm.addEventListener('submit', function(e) {
   e.preventDefault();
 
@@ -1112,6 +1110,57 @@ recipeForm.addEventListener('submit', function(e) {
     window.location.href = 'my-recipes.html';
   }, 2000);
 });
+    setTimeout(function() {
+      recipeForm.reset();
+      recipeForm.style.display = 'block';
+      successMessage.style.display = 'none';
+      
+      nameCount.textContent = '0';
+      descCount.textContent = '0';
+      fileNameDisplay.textContent = '';
+      uploadArea.style.borderColor = '#FFDAC1';
+      uploadArea.style.backgroundColor = '#FFFCF9';
+      
+      ingredientsContainer.innerHTML = `
+        <div class="ingredient-row">
+          <div class="form-group ingredient-name">
+            <label>Ingredient Name <span class="required">*</span></label>
+            <input type="text" name="ingredientName[]" placeholder="e.g., Banana 🍌" required>
+          </div>
+          <div class="form-group ingredient-amount">
+            <label>Amount <span class="required">*</span></label>
+            <input type="text" name="ingredientAmount[]" placeholder="e.g., 1 medium" required>
+          </div>
+        </div>
+      `;
+      
+      stepsContainer.innerHTML = `
+        <div class="step-row">
+          <div class="form-group step-number">
+            <label>Step #<span class="step-counter">1</span></label>
+            <input type="text" name="stepTitle[]" placeholder="Step title (optional)">
+          </div>
+          <div class="form-group step-content">
+            <label>Step Description <span class="required">*</span></label>
+            <textarea name="stepDescription[]" placeholder="Write step in a fun way for kids! 🎯" rows="2" required></textarea>
+          </div>
+          <div class="step-controls">
+            <button type="button" class="remove-btn remove-step" style="display: none;">
+              <i class="fas fa-trash"></i> Remove
+            </button>
+          </div>
+        </div>
+      `;
+      
+      ingredientCount = 1;
+      stepCount = 1;
+      
+      urlInput.classList.remove('active');
+      uploadInput.classList.remove('active');
+      
+    }, 4000);
+  });
+  
 
   // Reset Button
   document.getElementById('resetBtn').addEventListener('click', function(e) {
@@ -1145,4 +1194,5 @@ recipeForm.addEventListener('submit', function(e) {
 
 </body>
 </html>
+
 
