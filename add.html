@@ -45,6 +45,7 @@
       flex-direction: column;
     }
 
+    /* ===== Header ===== */
     /* ===== Header (نفس كود صديقتك بالضبط) ===== */
     header {
       background: linear-gradient(to right, var(--primary), var(--lavender));
@@ -575,7 +576,7 @@
       .page-header h2 {
         font-size: 2.2rem;
       }
-      
+
       .page-header p {
         font-size: 1.1rem;
         padding: 12px 20px;
@@ -587,6 +588,7 @@
 
 <div class="container">
 
+  <!-- ===== HEADER ===== -->
   <!-- ===== HEADER (نفس كود صديقتك بالضبط) ===== -->
   <header>
     <div class="header-left">
@@ -603,7 +605,7 @@
 
   <!-- ===== MAIN CONTENT ===== -->
   <div class="main-wrapper">
-    
+
     <!-- عنوان الصفحة الأساسي -->
     <div class="page-header">
       <h2><i class="fas fa-birthday-cake"></i> Add Kids Recipe</h2>
@@ -614,6 +616,7 @@
     <div class="recipe-container">
       <div class="success-message" id="successMessage">
         <i class="fas fa-check-circle"></i>
+        <span>Yay! Recipe saved successfully! 🎉<br><small>Redirecting to your recipes...</small></span>
         <span>Yay! Recipe saved successfully! 🎉</span>
       </div>
 
@@ -629,9 +632,9 @@
           </div>
 
           <div class="form-group">
-            <label for="recipeCategory">Category <span class="required">*</span></label>
+            <label for="recipeCategory">Meal Type <span class="required">*</span></label>
             <select id="recipeCategory" name="recipeCategory" required>
-              <option value="">Recipe Category</option>
+              <option value="">Select meal type</option>
               <option value="breakfast">Breakfast</option>
               <option value="lunch">Lunch</option>
               <option value="dinner">Dinner</option>
@@ -761,6 +764,7 @@
     </div>
   </div>
 
+  <!-- ===== FOOTER ===== -->
   <!-- ===== FOOTER (نفس كود صديقتك بالضبط) ===== -->
   <footer>
     © 2026 Kids Recipes — Made with 💖 for little ones
@@ -779,35 +783,35 @@
   const uploadArea = document.getElementById('uploadArea');
   const recipeImage = document.getElementById('recipeImage');
   const fileNameDisplay = document.getElementById('file-name');
-  
+
   // Character counters
   const nameCount = document.getElementById('nameCount');
   const descCount = document.getElementById('descCount');
   const recipeNameInput = document.getElementById('recipeName');
   const recipeDescInput = document.getElementById('recipeDescription');
-  
+
   // Video options
   const videoOptions = document.querySelectorAll('input[name="videoOption"]');
   const urlInput = document.getElementById('urlInput');
   const uploadInput = document.getElementById('uploadInput');
-  
+
   // Character counter for recipe name
   recipeNameInput.addEventListener('input', function() {
     nameCount.textContent = this.value.length;
     nameCount.style.color = this.value.length > 50 ? '#FF9AA2' : '#B5EAD7';
   });
-  
+
   // Character counter for recipe description
   recipeDescInput.addEventListener('input', function() {
     descCount.textContent = this.value.length;
     descCount.style.color = this.value.length > 200 ? '#FF9AA2' : '#B5EAD7';
   });
-  
+
   // Recipe image upload with drag & drop
   uploadArea.addEventListener('click', function() {
     recipeImage.click();
   });
-  
+
   recipeImage.addEventListener('change', function() {
     if (this.files.length > 0) {
       const fileName = this.files[0].name;
@@ -820,21 +824,21 @@
       uploadArea.style.backgroundColor = '#FFFCF9';
     }
   });
-  
+
   // Drag and drop functionality
   uploadArea.addEventListener('dragover', function(e) {
     e.preventDefault();
     this.classList.add('dragover');
   });
-  
+
   uploadArea.addEventListener('dragleave', function() {
     this.classList.remove('dragover');
   });
-  
+
   uploadArea.addEventListener('drop', function(e) {
     e.preventDefault();
     this.classList.remove('dragover');
-    
+
     if (e.dataTransfer.files.length) {
       recipeImage.files = e.dataTransfer.files;
       const fileName = e.dataTransfer.files[0].name;
@@ -843,13 +847,13 @@
       uploadArea.style.backgroundColor = 'rgba(181, 234, 215, 0.1)';
     }
   });
-  
+
   // Add new ingredient
   let ingredientCount = 1;
-  
+
   addIngredientBtn.addEventListener('click', function() {
     ingredientCount++;
-    
+
     const newIngredientRow = document.createElement('div');
     newIngredientRow.className = 'ingredient-row';
     newIngredientRow.innerHTML = `
@@ -867,22 +871,22 @@
         </button>
       </div>
     `;
-    
+
     ingredientsContainer.appendChild(newIngredientRow);
-    
+
     const removeBtn = newIngredientRow.querySelector('.remove-ingredient');
     removeBtn.addEventListener('click', function() {
       ingredientsContainer.removeChild(newIngredientRow);
       ingredientCount--;
     });
   });
-  
+
   // Add new step
   let stepCount = 1;
-  
+
   addStepBtn.addEventListener('click', function() {
     stepCount++;
-    
+
     const newStepRow = document.createElement('div');
     newStepRow.className = 'step-row';
     newStepRow.innerHTML = `
@@ -900,39 +904,39 @@
         </button>
       </div>
     `;
-    
+
     stepsContainer.appendChild(newStepRow);
-    
+
     const removeBtn = newStepRow.querySelector('.remove-step');
     removeBtn.addEventListener('click', function() {
       stepsContainer.removeChild(newStepRow);
       stepCount--;
       updateStepNumbers();
     });
-    
+
     if (stepCount > 1) {
       document.querySelectorAll('.remove-step')[0].style.display = 'block';
     }
   });
-  
+
   // Update step numbers
   function updateStepNumbers() {
     const stepCounters = document.querySelectorAll('.step-counter');
     stepCounters.forEach((counter, index) => {
       counter.textContent = index + 1;
     });
-    
+
     if (stepCount === 1) {
       document.querySelectorAll('.remove-step')[0].style.display = 'none';
     }
   }
-  
+
   // Show/hide video fields based on selection
   videoOptions.forEach(option => {
     option.addEventListener('change', function() {
       urlInput.classList.remove('active');
       uploadInput.classList.remove('active');
-      
+
       if (this.value === 'url') {
         urlInput.classList.add('active');
       } else if (this.value === 'upload') {
@@ -940,7 +944,23 @@
       }
     });
   });
-  
+
+  // ===== FORM SUBMISSION - FIXED =====
+  recipeForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // إخفاء الفورم وإظهار رسالة النجاح
+    recipeForm.style.display = 'none';
+    successMessage.style.display = 'flex';
+    successMessage.innerHTML = `
+      <i class="fas fa-check-circle"></i>
+      <span>Yay! Recipe saved successfully! 🎉<br><small>Redirecting to your recipes...</small></span>
+    `;
+    
+    // بعد ثانيتين يروح لصفحة my-recipes.html
+    setTimeout(() => {
+      window.location.href = 'my-recipes.html';
+    }, 2000);
   // Form submission
 recipeForm.addEventListener('submit', function(e) {
   e.preventDefault();
@@ -1009,23 +1029,23 @@ recipeForm.addEventListener('submit', function(e) {
       
     }, 4000);
   });
-  
+
   // Form reset
   document.getElementById('resetBtn').addEventListener('click', function(e) {
     e.preventDefault();
-    
+
     if (confirm('Are you sure you want to start over? All your fun recipe ideas will be gone! 🥺')) {
       nameCount.textContent = '0';
       descCount.textContent = '0';
       fileNameDisplay.textContent = '';
       uploadArea.style.borderColor = '#FFDAC1';
       uploadArea.style.backgroundColor = '#FFFCF9';
-      
+
       urlInput.classList.remove('active');
       uploadInput.classList.remove('active');
-      
+
       recipeForm.reset();
-      
+
       setTimeout(function() {
         ingredientsContainer.innerHTML = `
           <div class="ingredient-row">
@@ -1039,7 +1059,7 @@ recipeForm.addEventListener('submit', function(e) {
             </div>
           </div>
         `;
-        
+
         stepsContainer.innerHTML = `
           <div class="step-row">
             <div class="form-group step-number">
@@ -1057,13 +1077,13 @@ recipeForm.addEventListener('submit', function(e) {
             </div>
           </div>
         `;
-        
+
         ingredientCount = 1;
         stepCount = 1;
       }, 100);
     }
   });
-  
+
   function setActive(element) {
     const links = document.querySelectorAll("nav a");
     links.forEach(link => link.classList.remove("active"));
@@ -1073,4 +1093,3 @@ recipeForm.addEventListener('submit', function(e) {
 
 </body>
 </html>
-
