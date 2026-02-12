@@ -910,13 +910,14 @@
           </button>
           <button type="button" class="cancel-btn" id="cancelBtn">
             <i class="fas fa-times"></i> Cancel
-          </button>
+          </button> 
+          
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ===== FOOTER (نفس كود صديقتك بالضبط) ===== -->
+  <!-- ===== FOOTER ===== -->
   <footer>
     © 2026 Kids Recipes — Made with 💖 for little ones
   </footer>
@@ -1113,7 +1114,6 @@
       window.location.href = 'recipes-list.html';
     }, 3000);
   });
- // في قسم JavaScript تبع صفحة Edit Recipe، غير الكود هذا:
 
 // Form Submission
 recipeForm.addEventListener('submit', function(e) {
@@ -1150,11 +1150,9 @@ recipeForm.addEventListener('submit', function(e) {
   });
 
   // Cancel Button
-  document.getElementById('cancelBtn').addEventListener('click', function() {
-    if (confirm('Are you sure you want to cancel editing?')) {
-      window.location.href = 'recipes-list.html';
-    }
-  });
+document.getElementById('cancelBtn').addEventListener('click', function() {
+  window.location.href = 'my-recipes.html';
+});
 
   // Function for active nav (من كود صديقتك)
   function setActive(element) {
@@ -1166,3 +1164,4 @@ recipeForm.addEventListener('submit', function(e) {
 
 </body>
 </html>
+
