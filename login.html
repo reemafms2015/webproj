@@ -198,6 +198,46 @@
         font-size: 2rem;
       }
     }
+    /* =========
+   Profile Upload
+========= */
+.profile-upload {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.upload-label {
+  cursor: pointer;
+}
+
+.image-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px dashed var(--lavender);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  color: var(--dark);
+  background-color: var(--secondary);
+  overflow: hidden;
+  transition: 0.2s ease;
+}
+
+.image-preview:hover {
+  transform: scale(1.05);
+  background-color: var(--mint);
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
   </style>
 </head>
 
@@ -225,19 +265,49 @@
       <h2>Welcome Back</h2>
       <p>Log in to save and share your favorite recipes.</p>
 
-      <form action="user.html">
-        <div>
-          <label for="email">Email</label>
-          <input id="email" type="email" placeholder="you@example.com" required>
-        </div>
+    <form action="user.html" enctype="multipart/form-data">
+  
+ <div class="profile-upload">
 
-        <div>
-          <label for="password">Password</label>
-          <input id="password" type="password" placeholder="Enter your password" required>
-        </div>
+  <label for="profilePic" class="upload-label">
+    <div class="image-preview" id="imagePreview">
+      <span>Upload Photo</span>
+    </div>
+  </label>
 
-        <button class="primary-btn" type="submit">Log In</button>
-      </form>
+  <input
+    id="profilePic"
+    type="file"
+    accept="image/*"
+    hidden
+  />
+
+</div>
+
+  <div>
+    <label for="email">Email</label>
+    <input
+      id="email"
+      type="email"
+      placeholder="you@example.com"
+      required
+    />
+  </div>
+
+  <div>
+    <label for="password">Password</label>
+    <input
+      id="password"
+      type="password"
+      placeholder="Enter your password"
+      required
+    />
+  </div>
+
+  <button class="primary-btn" type="submit">Log In</button>
+
+</form>
+
 
       <div class="helper">
         New here? <a href="signin.html">Create an account</a>
@@ -251,6 +321,25 @@
   </footer>
 
 </div>
+  <script>
+  const profileInput = document.getElementById("profilePic");
+  const preview = document.getElementById("imagePreview");
+
+  profileInput.addEventListener("change", function () {
+    const file = this.files[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.addEventListener("load", function () {
+        preview.innerHTML = `<img src="${this.result}" />`;
+      });
+
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+
 
 </body>
 </html>
