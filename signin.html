@@ -208,46 +208,7 @@
         grid-template-columns: 1fr;
       }
     }
-    /* =========
-   Profile Upload
-========= */
-.profile-upload {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.upload-label {
-  cursor: pointer;
-}
-
-.image-preview {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  border: 4px dashed var(--lavender);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-weight: 700;
-  color: var(--dark);
-  background-color: var(--secondary);
-  overflow: hidden;
-  transition: 0.2s ease;
-}
-
-.image-preview:hover {
-  transform: scale(1.05);
-  background-color: var(--mint);
-}
-
-.image-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
+    
   </style>
 </head>
 
@@ -305,23 +266,7 @@
 
         <button class="primary-btn" type="submit">Sign In</button>
 
-        <div class="profile-upload">
-
-  <label for="profilePic" class="upload-label">
-    <div class="image-preview" id="imagePreview">
-      <span>Upload Photo</span>
-    </div>
-  </label>
-
-  <input
-    id="profilePic"
-    type="file"
-    accept="image/*"
-    hidden
-  />
-
-</div>
-
+        
       </form>
 
       <div class="helper">
@@ -336,24 +281,7 @@
   </footer>
 
 </div>
-<script>
-  const profileInput = document.getElementById("profilePic");
-  const preview = document.getElementById("imagePreview");
 
-  profileInput.addEventListener("change", function () {
-    const file = this.files[0];
-
-    if (file) {
-      const reader = new FileReader();
-
-      reader.addEventListener("load", function () {
-        preview.innerHTML = `<img src="${this.result}" />`;
-      });
-
-      reader.readAsDataURL(file);
-    }
-  });
-</script>
 
 </body>
 </html>
