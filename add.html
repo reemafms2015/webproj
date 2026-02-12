@@ -759,6 +759,9 @@
           <button type="reset" class="reset-btn" id="resetBtn">
             <i class="fas fa-redo"></i> Start Over
           </button>
+          <button type="button" class="cancel-btn" id="cancelBtn">
+  <i class="fas fa-times"></i> Cancel
+</button>
         </div>
       </form>
     </div>
@@ -979,6 +982,9 @@ recipeForm.addEventListener('submit', function(e) {
     window.location.href = 'my-recipes.html';
   }, 2000);
 });
+    document.getElementById('cancelBtn').addEventListener('click', function() {
+  window.location.href = 'my-recipes.html';
+});
     setTimeout(function() {
       recipeForm.reset();
       recipeForm.style.display = 'block';
@@ -1093,5 +1099,6 @@ recipeForm.addEventListener('submit', function(e) {
 
 </body>
 </html>
+
 
 
