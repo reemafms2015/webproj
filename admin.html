@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Page - Little Chefs</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-
 <style>
+
 :root{
 --primary:#FF9AA2;
 --accent:#FFDAC1;
@@ -17,220 +16,281 @@
 --dark:#5D576B;
 --light:#FFF9F5;
 --radius:16px;
---shadow:0 8px 25px rgba(93, 87, 107, 0.10);
---t: all 0.25s ease;
+--shadow:0 8px 25px rgba(93,87,107,0.10);
+--t:all 0.25s ease;
 }
 
-*{ margin:0; padding:0; box-sizing:border-box; }
-
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
 body{
-font-family:'Nunito', sans-serif;
-background: linear-gradient(135deg, var(--accent) 0%, var(--blue) 100%);
+font-family:'Nunito',sans-serif;
+background:linear-gradient(135deg,var(--accent) 0%,var(--blue) 100%);
 min-height:100vh;
-padding:20px;
 color:var(--dark);
+padding:0;
+}
+
+.page-pad{padding:20px;}
+
+.site-header{
+background:linear-gradient(to right,var(--primary),var(--blue));
+padding:15px 40px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.header-left{
+display:flex;
+align-items:center;
+gap:15px;
+}
+
+.logo{
+width:130px;
+height:auto;
+filter:drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+}
+
+.site-header h1{
+font-family:'Comic Neue',cursive;
+font-size:2.4rem;
+color:#fff;
+}
+
+nav a{
+margin-left:25px;
+color:#fff;
+text-decoration:none;
+font-weight:700;
+cursor:pointer;
+padding-bottom:5px;
+position:relative;
+}
+
+nav a:hover{color:var(--yellow);}
+
+nav a.active{
+color:var(--yellow);
+border-bottom:3px solid var(--yellow);
+}
+
+footer{
+background:var(--green);
+padding:25px;
+text-align:center;
+font-weight:600;
 }
 
 .container{
-max-width: 1000px;
-margin: 0 auto;
+max-width:1000px;
+margin:0 auto;
 background:#fff;
-border-radius: var(--radius);
-box-shadow: var(--shadow);
+border-radius:var(--radius);
+box-shadow:var(--shadow);
 overflow:hidden;
-border: 6px solid var(--yellow);
+border:6px solid var(--yellow);
 }
 
-header{
-background: #ffffff;
-padding: 22px 26px;
-border-bottom: 3px solid rgba(255,218,193,0.9);
+.admin-header{
+background:#ffffff;
+padding:22px 26px;
+border-bottom:3px solid rgba(255,218,193,0.9);
 }
 
 .topbar{
 display:flex;
 align-items:flex-start;
 justify-content:space-between;
-gap: 12px;
-flex-wrap: wrap;
+gap:12px;
+flex-wrap:wrap;
 }
 
 .welcome{
-font-family:'Comic Neue', cursive;
-font-size: 2.1rem;
-font-weight: 700;
+font-family:'Comic Neue',cursive;
+font-size:2.1rem;
+font-weight:700;
 }
 
 .logout{
-font-weight: 900;
-color: var(--dark);
-text-decoration: underline;
+font-weight:900;
+color:var(--dark);
+text-decoration:underline;
 cursor:pointer;
-padding: 8px 10px;
-border-radius: 10px;
-transition: var(--t);
+padding:8px 10px;
+border-radius:10px;
+transition:var(--t);
 }
 
-.logout:hover{
-background: rgba(199,206,234,0.35);
-}
+.logout:hover{background:rgba(199,206,234,0.35);}
 
 main{
-background: var(--light);
-padding: 24px;
+background:var(--light);
+padding:24px;
 }
 
 .panel{
 background:#fff;
-border-radius: 14px;
-padding: 20px;
-border: 2px solid rgba(93,87,107,0.25);
-margin-bottom: 18px;
+border-radius:14px;
+padding:20px;
+border:2px solid rgba(93,87,107,0.25);
+margin-bottom:18px;
 }
 
 .panel-title{
-font-family:'Comic Neue', cursive;
-font-size: 1.9rem;
-margin-bottom: 12px;
-font-weight: 700;
+font-family:'Comic Neue',cursive;
+font-size:1.9rem;
+margin-bottom:12px;
+font-weight:700;
 }
 
 .info-lines{
-line-height: 1.9;
-font-size: 1.05rem;
+line-height:1.9;
+font-size:1.05rem;
 }
 
 .info-lines b{
 display:inline-block;
-min-width: 140px;
+min-width:140px;
 }
 
 .section-title{
-font-family:'Comic Neue', cursive;
-font-size: 2rem;
-margin: 18px 0 12px;
-font-weight: 700;
+font-family:'Comic Neue',cursive;
+font-size:2rem;
+margin:18px 0 12px;
+font-weight:700;
 }
 
 table{
 width:100%;
-border-collapse: collapse;
+border-collapse:collapse;
 background:#fff;
-border: 2px solid rgba(93,87,107,0.35);
+border:2px solid rgba(93,87,107,0.35);
 }
 
-th, td{
-border: 2px solid rgba(93,87,107,0.35);
-padding: 14px 12px;
-vertical-align: top;
+th,td{
+border:2px solid rgba(93,87,107,0.35);
+padding:14px 12px;
+vertical-align:top;
 }
 
 th{
-background: #FFDAC1;
-color: #5D576B;
-font-weight: 900;
-text-align: center;
+background:#FFDAC1;
+color:#5D576B;
+font-weight:900;
+text-align:center;
 }
 
-td{
-background: #fff;
-}
+td{background:#fff;}
 
-a{
-color: inherit;
-text-decoration: none;
-}
+a{color:inherit;text-decoration:none;}
 
 .recipe-link{
-color: #5D576B;
-font-weight: 600;
-cursor: pointer;
+color:#5D576B;
+font-weight:600;
+cursor:pointer;
 }
 
-.recipe-link:hover{
-color: #FF9AA2;
-}
+.recipe-link:hover{color:#FF9AA2;}
 
 .creator-cell{
 display:flex;
 align-items:center;
-gap: 10px;
-flex-wrap: wrap;
+gap:10px;
+flex-wrap:wrap;
 }
 
 .avatar{
 width:56px;
 height:56px;
-border-radius: 50%;
-object-fit: cover;
-border: 2px solid var(--accent);
+border-radius:50%;
+object-fit:cover;
+border:2px solid var(--accent);
 background:#fff;
 }
 
 .radio-group{
 display:flex;
-flex-direction: column;
-gap: 10px;
-margin-bottom: 12px;
+flex-direction:column;
+gap:10px;
+margin-bottom:12px;
 }
 
 .radio-item{
 display:flex;
 align-items:center;
-gap: 10px;
-font-weight: 800;
+gap:10px;
+font-weight:800;
 }
 
 .submit-btn{
 border:none;
 cursor:pointer;
-border-radius: 10px;
-padding: 12px 18px;
-font-weight: 900;
-font-family:'Comic Neue', cursive;
-background: var(--green);
-color: var(--dark);
-box-shadow: 0 5px 0 #8FD5B7;
-transition: var(--t);
-min-width: 120px;
+border-radius:10px;
+padding:12px 18px;
+font-weight:900;
+font-family:'Comic Neue',cursive;
+background:var(--green);
+color:var(--dark);
+box-shadow:0 5px 0 #8FD5B7;
+transition:var(--t);
+min-width:120px;
 }
 
 .submit-btn:hover{
-transform: translateY(-3px);
-box-shadow: 0 8px 0 #8FD5B7;
+transform:translateY(-3px);
+box-shadow:0 8px 0 #8FD5B7;
 }
 
 .small-note{
-font-size: 0.9rem;
-opacity: 0.8;
-margin-top: 10px;
-line-height: 1.6;
+font-size:0.9rem;
+opacity:0.8;
+margin-top:10px;
+line-height:1.6;
 }
 
-@media (max-width: 820px){
-.welcome{ font-size: 1.8rem; }
-th, td{ padding: 12px 10px; }
-.creator-cell{ flex-direction: column; align-items:flex-start; }
-.avatar{ width: 50px; height: 50px; }
+@media (max-width:820px){
+.welcome{font-size:1.8rem;}
+
+th,td{padding:12px 10px;}
+
+.creator-cell{flex-direction:column;align-items:flex-start;}
+
+.avatar{width:50px;height:50px;}
 }
+
 </style>
 </head>
 
 <body>
+
+<header class="site-header">
+<div class="header-left">
+<img src="photo.png" alt="Kids Recipes Logo" class="logo">
+<h1>LittleChefs</h1>
+</div>
+<nav>
+<a href="index.html">Home</a>
+<a href="user.html">Users</a>
+<a class="active" href="admin.html">Admins</a>
+</nav>
+</header>
+
+<div class="page-pad">
 <div class="container">
 
-<header>
+<div class="admin-header">
 <div class="topbar">
 <div class="welcome">Welcome Lama</div>
 <a href="index.html"><div class="logout">Logout</div></a>
 </div>
-</header>
+</div>
 
 <main>
 <section class="panel">
 <div class="panel-title">My Information</div>
 <div class="info-lines">
-<div><b>Name</b> <span>Lama</span></div>
+<div><b>Name</b> <span>Lama Almohsen</span></div>
 <div><b>Email address</b> <span>Lama@littlechefs.com</span></div>
 </div>
 </section>
@@ -246,13 +306,11 @@ th, td{ padding: 12px 10px; }
 <th style="width:30%;">Action</th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>
 <a href="view-recipe.html"><div class="recipe-link">Banana Pancakes</div></a>
 </td>
-
 <td>
 <div class="creator-cell">
 <div>
@@ -262,16 +320,11 @@ th, td{ padding: 12px 10px; }
 <img class="avatar" src="sara.png" alt="creator photo">
 </div>
 </td>
-
 <td>
 <form>
 <div class="radio-group">
-<label class="radio-item">
-<input type="radio" required> Block User
-</label>
-<label class="radio-item">
-<input type="radio"> Dismiss Report
-</label>
+<label class="radio-item"><input type="radio" required> Block User</label>
+<label class="radio-item"><input type="radio"> Dismiss Report</label>
 </div>
 <button class="submit-btn" type="submit">Submit</button>
 </form>
@@ -282,7 +335,6 @@ th, td{ padding: 12px 10px; }
 <td>
 <a href="view-recipe.html"><div class="recipe-link">Fruit Yogurt Cups</div></a>
 </td>
-
 <td>
 <div class="creator-cell">
 <div>
@@ -292,16 +344,11 @@ th, td{ padding: 12px 10px; }
 <img class="avatar" src="sara.png" alt="creator photo">
 </div>
 </td>
-
 <td>
 <form>
 <div class="radio-group">
-<label class="radio-item">
-<input type="radio" required> Block User
-</label>
-<label class="radio-item">
-<input type="radio"> Dismiss Report
-</label>
+<label class="radio-item"><input type="radio" required> Block User</label>
+<label class="radio-item"><input type="radio"> Dismiss Report</label>
 </div>
 <button class="submit-btn" type="submit">Submit</button>
 </form>
@@ -331,9 +378,19 @@ th, td{ padding: 12px 10px; }
 </section>
 
 </main>
+
 </div>
+</div>
+
+<footer>
+© 2026 Kids Recipes — Made with 💖 for little ones
+</footer>
+
 </body>
 </html>
 
+
+
            
+
 
