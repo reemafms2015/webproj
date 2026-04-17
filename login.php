@@ -21,7 +21,7 @@ if (!filter_var($emailAddress, FILTER_VALIDATE_EMAIL)) {
 }
 
 // Check if blocked
-$blockedSql = "SELECT id FROM BlockedUser WHERE emailAddress = ?";
+$blockedSql = "SELECT id FROM blockeduser WHERE emailAddress = ?";
 $blockedStmt = $conn->prepare($blockedSql);
 
 if (!$blockedStmt) {
@@ -39,7 +39,7 @@ if ($blockedResult->num_rows > 0) {
 }
 
 // Check user exists
-$userSql = "SELECT id, userType, password FROM User WHERE emailAddress = ?";
+$userSql = "SELECT id, userType, password FROM user WHERE emailAddress = ?";
 $userStmt = $conn->prepare($userSql);
 
 if (!$userStmt) {
@@ -69,7 +69,7 @@ $_SESSION["userID"] = $user["id"];
 $_SESSION["userType"] = $user["userType"];
 
 // Redirect based on type
-if ($user["userType"] === "admin") {
+if (strtolower($user["userType"]) === "admin") {
     header("Location: admin.php");
     exit();
 } else {
