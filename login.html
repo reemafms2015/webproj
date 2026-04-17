@@ -233,46 +233,35 @@
       <h2>Welcome Back</h2>
       <p>Log in to save and share your favorite recipes.</p>
 
-      <form>
-        <div>
-          <label for="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            required
-          />
-        </div>
+     <form action="login.php" method="POST">
+  <div>
+    <label for="email">Email</label>
+    <input
+      id="email"
+      name="emailAddress"
+      type="email"
+      placeholder="you@example.com"
+      required
+    />
+  </div>
 
-        <div>
-          <label for="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            required
-          />
-        </div>
+  <div>
+    <label for="password">Password</label>
+    <input
+      id="password"
+      name="password"
+      type="password"
+      placeholder="Enter your password"
+      required
+    />
+  </div>
 
-        <!-- Two Login Options -->
-        <div class="btn-group">
-          <button
-            class="primary-btn"
-            type="button"
-            onclick="window.location.href='user.html'"
-          >
-            Log In as User
-          </button>
-
-          <button
-            class="primary-btn"
-            type="button"
-            onclick="window.location.href='admin.html'"
-          >
-            Log In as Admin
-          </button>
-        </div>
-      </form>
+  <div class="btn-group">
+    <button class="primary-btn" type="submit">
+      Log In
+    </button>
+  </div>
+</form>
 
       <div class="helper">
         New here? <a href="signin.html">Create an account</a>
