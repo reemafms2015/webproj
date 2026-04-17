@@ -276,7 +276,7 @@
       <h2>Create Your Account</h2>
       <p>Join the LittleChefs community for tasty ideas.</p>
 
-      <form action="user.html" enctype="multipart/form-data">
+     <form action="signup.php" method="POST" enctype="multipart/form-data">
 
   <!-- Profile Picture Upload -->
   <div class="profile-upload">
@@ -289,36 +289,38 @@
 
     <input
       id="profilePic"
+      name="photo"
       type="file"
       accept="image/*"
       hidden
+      
     />
   </div>
 
   <div class="row">
     <div>
       <label for="first-name">First name</label>
-      <input id="first-name" type="text" placeholder="Reema" required>
+      <input id="first-name" name="firstName" type="text" placeholder="Reema" required ">
     </div>
     <div>
       <label for="last-name">Last name</label>
-      <input id="last-name" type="text" placeholder="Faisal" required>
+      <input id="last-name" name="lastName" type="text" placeholder="Faisal" required>
     </div>
   </div>
 
   <div>
     <label for="email">Email</label>
-    <input id="email" type="email" placeholder="you@example.com" required>
+    <input id="email" name="emailAddress" type="email" placeholder="you@example.com" required>
   </div>
 
   <div class="row">
     <div>
       <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Create a password" required>
+      <input id="password" name="password" type="password" placeholder="Create a password" required>
     </div>
     <div>
       <label for="confirm">Confirm password</label>
-      <input id="confirm" type="password" placeholder="Repeat password" required>
+      <input id="confirm"  name="confirmPassword" type="password" placeholder="Repeat password" required>
     </div>
   </div>
 
