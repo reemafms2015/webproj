@@ -35,7 +35,7 @@ if ($password !== $confirmPassword) {
 }
 
 // Check if email already exists in User table
-$checkUserSql = "SELECT id FROM User WHERE emailAddress = ?";
+$checkUserSql = "SELECT id FROM user WHERE emailAddress = ?";
 $checkUserStmt = $conn->prepare($checkUserSql);
 
 if (!$checkUserStmt) {
@@ -53,7 +53,7 @@ if ($userResult->num_rows > 0) {
 }
 
 // Check if email exists in BlockedUser table
-$checkBlockedSql = "SELECT id FROM BlockedUser WHERE emailAddress = ?";
+$checkBlockedSql = "SELECT id FROM blockeduser WHERE emailAddress = ?";
 $checkBlockedStmt = $conn->prepare($checkBlockedSql);
 
 if (!$checkBlockedStmt) {
@@ -101,7 +101,7 @@ $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 $userType = "user";
 
 // Insert user
-$insertSql = "INSERT INTO User (userType, firstName, lastName, emailAddress, password, photoFileName)
+$insertSql = "INSERT INTO user (userType, firstName, lastName, emailAddress, password, photoFileName)
               VALUES (?, ?, ?, ?, ?, ?)";
 $insertStmt = $conn->prepare($insertSql);
 
@@ -137,7 +137,7 @@ if ($photoFileName !== "default.png" && file_exists($uploadDirectory . $photoFil
     if (rename($oldPath, $newPath)) {
         $photoFileName = $newPhotoFileName;
 
-        $updatePhotoSql = "UPDATE User SET photoFileName = ? WHERE id = ?";
+        $updatePhotoSql = "UPDATE user SET photoFileName = ? WHERE id = ?";
         $updatePhotoStmt = $conn->prepare($updatePhotoSql);
         if ($updatePhotoStmt) {
             $updatePhotoStmt->bind_param("si", $photoFileName, $newUserId);
