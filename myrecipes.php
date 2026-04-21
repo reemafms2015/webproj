@@ -316,7 +316,7 @@ function getRecipePhoto($recipeName, $photoFileName) {
                     ?>
                     <tr>
                         <td>
-                            <a href="viewRecipe.php?id=<?php echo $recipeID; ?>">
+                            <a href="view-recipe.php?id=<?php echo $recipeID; ?>">
                                 <?php echo htmlspecialchars($recipe['name']); ?>
                             </a>
                             <img src="<?php echo htmlspecialchars($recipePhoto); ?>" class="recipeImage" alt="Recipe Image">
@@ -359,7 +359,7 @@ function getRecipePhoto($recipeName, $photoFileName) {
                         <td><?php echo $recipe['totalLikes']; ?></td>
 
                         <td>
-                            <a href="editRecipe.php?id=<?php echo $recipeID; ?>">Edit</a>
+                            <a href="edit.php?id=<?php echo $recipeID; ?>">Edit</a>
                         </td>
 
                         <td>
@@ -374,7 +374,7 @@ function getRecipePhoto($recipeName, $photoFileName) {
     </div>
 
     <div class="center">
-        <a href="addRecipe.php" class="primaryButton">➕ Add New Recipe</a>
+        <a href="add.php" class="primaryButton">➕ Add New Recipe</a>
     </div>
 
 </div>
