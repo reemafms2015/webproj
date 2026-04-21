@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8889
--- Generation Time: Apr 20, 2026 at 05:44 PM
+-- Generation Time: Apr 21, 2026 at 01:04 PM
 -- Server version: 5.7.24
 -- PHP Version: 8.3.1
 
@@ -171,10 +171,10 @@ CREATE TABLE `recipe` (
 --
 
 INSERT INTO `recipe` (`id`, `userID`, `categoryID`, `name`, `description`, `photoFileName`, `videoFilePath`) VALUES
-(2, 2, 1, 'Bananapancake', 'Soft and healthy banana pancakes made with simple ingredients. Perfect for kids and super easy to prepare.', 'banana-pancakes0101.png', 'banana0102.mp4'),
-(3, 3, 3, 'FruitYogurtcups', 'A healthy and refreshing breakfast made with creamy yogurt and fresh mixed fruits. Perfect for kids to start their day with a nutritious and energy boosting meal.', 'yogurt0104.png', 'yogurt1015.mp4'),
-(5, 2, 1, 'veggie Omelette', 'A delicious and nutritious breakfast omelette made with eggs, vegetables, and cheese. A great way to give kids a balanced meal full of protein and essential nutrients.', 'omelette45609.png', 'omelette7895.mp4'),
-(6, 6, 2, 'Chicken & Rise', 'a delicious chicken and rice made with tender chicken and flavorful rice. This healthy and balanced meal is perfect for kids, providing protein and energy to start the day', 'chicken-rice56732.png', 'chicken-rice09834.png.mp4');
+(2, 2, 1, 'Bananapancake', 'Soft and healthy banana pancakes made with simple ingredients. Perfect for kids and super easy to prepare.', 'banana-pancakes_0101.png', 'banana_0102.mp4'),
+(3, 3, 3, 'FruitYogurtcups', 'A healthy and refreshing breakfast made with creamy yogurt and fresh mixed fruits. Perfect for kids to start their day with a nutritious and energy boosting meal.', 'yogurt_0104.png', 'yogurt_1015.mp4'),
+(5, 2, 1, 'veggie Omelette', 'A delicious and nutritious breakfast omelette made with eggs, vegetables, and cheese. A great way to give kids a balanced meal full of protein and essential nutrients.', 'omelette_45609.png', 'omelette_7895.mp4'),
+(6, 6, 2, 'Chicken & Rise', 'a delicious chicken and rice made with tender chicken and flavorful rice. This healthy and balanced meal is perfect for kids, providing protein and energy to start the day', 'chicken-rice_56732.png', 'chicken-rice_09834.png.mp4');
 
 -- --------------------------------------------------------
 
