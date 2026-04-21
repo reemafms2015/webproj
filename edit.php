@@ -11,17 +11,36 @@ if ($conn->connect_error) {
 $errorMessage = "";
 $successMessage = "";
 
+
+
+
+
+
+
+
+// ______________Check recipe ID from query string______________
+
 $recipeID = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($recipeID <= 0) {
     die("Invalid recipe ID");
 }
 
+
+
+
+
+// ____________________Retrieve recipe information from database_____________
+
 $recipeSql = "SELECT * FROM recipe WHERE id = ?";
 $recipeStmt = $conn->prepare($recipeSql);
 $recipeStmt->bind_param("i", $recipeID);
 $recipeStmt->execute();
 $recipeResult = $recipeStmt->get_result();
+
+
+
+
 
 if ($recipeResult->num_rows === 0) {
     die("Recipe not found");
@@ -81,7 +100,23 @@ if (!empty($recipe['videoFilePath'])) {
     }
 }
 
+
+
+
+
+
+
+
+
+
+//____________- When form is submitted____________--
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
+    
+    
+    
+    
+    
     
     $name = trim($_POST['name']);
     $categoryID = (int)$_POST['categoryID'];
@@ -113,8 +148,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
         }
     }
     
+    
+    
+    
+    
+    
+    
+    
+    //________ Keep old image if no new upload____________
+    
+    
     $photoFileName = $recipe['photoFileName'];
     $photoError = false;
+    
+    
+    
+    
+    
+    
+    
+    //___________ If new image uploaded, replace old image_________
+    
     
     if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = getUploadPath('image');
@@ -152,7 +206,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
         $photoError = true;
     }
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // Keep old video if no new upload
+    
     $videoFilePath = $recipe['videoFilePath'];
+    
+    
+    
+    
+    
+    
+    
+    
     
     if (!$photoError && empty($errorMessage)) {
         if ($videoOptionSelected === 'none') {
@@ -171,6 +245,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
                 $videoFilePath = $videoUrlInput . '?recipe_id=' . $recipeID;
             }
         }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        // ___________Replace old video if new one uploaded____________
+        
         elseif ($videoOptionSelected === 'upload' && isset($_FILES['videoFile']) && $_FILES['videoFile']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = getUploadPath('video');
             
@@ -199,6 +284,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
         }
     }
     
+    
+    
+    // _________Update recipe information in database_____________-
+ 
     if (empty($errorMessage)) {
         $updateSql = "UPDATE recipe SET 
                       name = '" . $conn->real_escape_string($name) . "', 
@@ -208,7 +297,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
                       videoFilePath = '" . $conn->real_escape_string($videoFilePath) . "' 
                       WHERE id = $recipeID";
         
+        
+        
+        
+        
+        
+        
+        
+        
+        
         if ($conn->query($updateSql)) {
+            
+            
+            
+            
+            // _______--Delete old ingredients and insert updated ones______-
+            
             
             $conn->query("DELETE FROM ingredients WHERE recipeID = $recipeID");
             if (!empty($newIngredients)) {
@@ -219,6 +323,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
                 }
                 $stmt->close();
             }
+            
+            
+            
+            
+            
+            
+            // _____-Delete old instructions and insert updated ones_____-
+            
+            
             
             $conn->query("DELETE FROM instructions WHERE recipeID = $recipeID");
             if (!empty($newInstructions)) {
@@ -259,6 +372,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
             } else {
                 $videoOption = 'upload';
             }
+            
+            
+            
+            
+            //___________ Redirect to my recipes page after update______-
+            
             
             echo "<script>
                     setTimeout(function() {
@@ -628,11 +747,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
 
       <form class="recipe-form" id="recipeForm" method="POST" enctype="multipart/form-data" style="<?php echo $successMessage ? 'display: none;' : 'display: block;'; ?>">
         <input type="hidden" name="updateRecipe" value="1">
+        
+        
+        
+        
+        
+        
+        
+        
+         <!-- ************Hidden input to keep recipe ID*********** -->
+         
+        
+        
         <input type="hidden" name="recipeID" value="<?php echo $recipeID; ?>">
         
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-info-circle"></i> Recipe Information</h2>
-
+          
+          
+          
+          
+          <!--************* Display recipe data in form fields************ -->
+          
+          
+          
+          
           <div class="form-group">
             <label for="name">Recipe Name <span class="required">*</span></label>
             <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($recipe['name']); ?>" required>
@@ -651,6 +790,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
             </select>
           </div>
 
+          
+          
+          
+          
+          
+          
+          
+          
           <div class="form-group">
             <label for="description">Recipe Description <span class="required">*</span></label>
             <textarea id="description" name="description" required><?php echo htmlspecialchars($recipe['description']); ?></textarea>
