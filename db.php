@@ -1,12 +1,7 @@
 <?php
-$host = "localhost";
-$dbname = "recipedb";
-$username = "root";
-$password = "";
+$conn = mysqli_connect("localhost", "root", "root", "recipedb (2)", 8889);
 
-$conn = new mysqli($host, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
 }
 ?>
