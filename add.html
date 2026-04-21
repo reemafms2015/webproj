@@ -186,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                 // إعادة التوجيه بعد 2 ثانية
                 echo "<script>
                         setTimeout(function() {
-                            window.location.href = 'my-recipes.php';
+                            window.location.href = 'myrecipes.php';
                         }, 2000);
                       </script>";
             } else {
@@ -1211,7 +1211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
 
   // Cancel button
   document.getElementById('cancelBtn').addEventListener('click', function() {
-    window.location.href = 'my-recipes.php';
+    window.location.href = 'myrecipes.php';
   });
 
   // Form reset
