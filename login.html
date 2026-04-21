@@ -231,6 +231,7 @@
   <main>
     <section class="card">
       <h2>Welcome Back</h2>
+      <div id="message" style="text-align:center; margin-bottom:15px; font-weight:bold;"></div>
       <p>Log in to save and share your favorite recipes.</p>
 
      <form action="login.php" method="POST">
@@ -275,7 +276,20 @@
   </footer>
 
 </div>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const messageDiv = document.getElementById("message");
 
+  if (params.has("error")) {
+    messageDiv.style.color = "red";
+    messageDiv.textContent = params.get("error");
+  }
+
+  if (params.has("success")) {
+    messageDiv.style.color = "green";
+    messageDiv.textContent = params.get("success");
+  }
+</script>
 </body>
 </html>
 
