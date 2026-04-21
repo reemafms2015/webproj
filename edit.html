@@ -1,3 +1,291 @@
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// الاتصال بقاعدة البيانات
+$conn = new mysqli("localhost", "root", "root", "recipedb", 8889);
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$errorMessage = "";
+$successMessage = "";
+
+// جلب ID الوصفة من الرابط
+$recipeID = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+if ($recipeID <= 0) {
+    die("Invalid recipe ID");
+}
+
+// جلب بيانات الوصفة
+$recipeSql = "SELECT * FROM recipe WHERE id = ?";
+$recipeStmt = $conn->prepare($recipeSql);
+$recipeStmt->bind_param("i", $recipeID);
+$recipeStmt->execute();
+$recipeResult = $recipeStmt->get_result();
+
+if ($recipeResult->num_rows === 0) {
+    die("Recipe not found");
+}
+$recipe = $recipeResult->fetch_assoc();
+$recipeStmt->close();
+
+// جلب الفئات
+$categoriesQuery = "SELECT id, categoryname FROM recipecategory ORDER BY id";
+$categoriesResult = $conn->query($categoriesQuery);
+$categories = [];
+if ($categoriesResult->num_rows > 0) {
+    while($row = $categoriesResult->fetch_assoc()) {
+        $categories[] = $row;
+    }
+}
+
+// جلب المكونات
+$ingredients = [];
+$ingResult = $conn->query("SELECT * FROM ingredients WHERE recipeID = $recipeID");
+while ($row = $ingResult->fetch_assoc()) {
+    $ingredients[] = $row;
+}
+
+// جلب التعليمات
+$instructions = [];
+$instResult = $conn->query("SELECT * FROM instructions WHERE recipeID = $recipeID ORDER BY stepOrder");
+while ($row = $instResult->fetch_assoc()) {
+    $instructions[] = $row;
+}
+
+// دالة لتوليد 4 أرقام عشوائية
+function getRandomDigits() {
+    return rand(1000, 9999);
+}
+
+// دالة لتنظيف اسم الملف
+function cleanFileName($name) {
+    $clean = preg_replace('/[^a-zA-Z0-9]/', '_', $name);
+    $clean = substr($clean, 0, 20);
+    return $clean;
+}
+
+// تحديد خيار الفيديو الحالي
+$videoOption = 'none';
+$videoUrl = '';
+if (!empty($recipe['videoFilePath'])) {
+    if (filter_var($recipe['videoFilePath'], FILTER_VALIDATE_URL)) {
+        $videoOption = 'url';
+        $videoUrl = $recipe['videoFilePath'];
+    } else {
+        $videoOption = 'upload';
+    }
+}
+
+// معالجة التعديل
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
+    
+    $name = trim($_POST['name']);
+    $categoryID = (int)$_POST['categoryID'];
+    $description = trim($_POST['description']);
+    $videoOptionSelected = $_POST['videoOption'] ?? 'none';
+    $videoUrlInput = $_POST['videoUrl'] ?? '';
+    
+    // تجميع المكونات الجديدة
+    $newIngredients = [];
+    if (!empty($_POST['ingredientName'])) {
+        foreach ($_POST['ingredientName'] as $i => $ingName) {
+            if (!empty($ingName) && !empty($_POST['ingredientQuantity'][$i])) {
+                $newIngredients[] = [
+                    'name' => $ingName,
+                    'quantity' => $_POST['ingredientQuantity'][$i]
+                ];
+            }
+        }
+    }
+    
+    // تجميع التعليمات الجديدة
+    $newInstructions = [];
+    if (!empty($_POST['stepDescription'])) {
+        foreach ($_POST['stepDescription'] as $i => $stepDesc) {
+            if (!empty($stepDesc)) {
+                $newInstructions[] = [
+                    'title' => !empty($_POST['stepTitle'][$i]) ? $_POST['stepTitle'][$i] : '',
+                    'description' => $stepDesc
+                ];
+            }
+        }
+    }
+    
+    // 1. التحقق من وجود صورة
+    $hasPhoto = false;
+    $photoFileName = $recipe['photoFileName'];
+    
+    if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
+        $hasPhoto = true;
+    } elseif (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
+        $hasPhoto = true;
+    }
+    
+    if (!$hasPhoto) {
+        $errorMessage = "❌ Photo is required! Please upload a recipe image.";
+    }
+    // 2. التحقق من وجود تغييرات
+    elseif ($name === $recipe['name'] && 
+            $categoryID == $recipe['categoryID'] && 
+            $description === $recipe['description'] &&
+            count($newIngredients) == count($ingredients) &&
+            count($newInstructions) == count($instructions) &&
+            $videoOptionSelected === $videoOption) {
+        
+        // التحقق من المكونات
+        $ingredientsSame = true;
+        for ($i = 0; $i < count($ingredients); $i++) {
+            if (!isset($newIngredients[$i]) ||
+                $ingredients[$i]['ingredientName'] !== $newIngredients[$i]['name'] ||
+                $ingredients[$i]['ingredientQuantity'] !== $newIngredients[$i]['quantity']) {
+                $ingredientsSame = false;
+                break;
+            }
+        }
+        
+        // التحقق من التعليمات
+        $instructionsSame = true;
+        for ($i = 0; $i < count($instructions); $i++) {
+            $oldStep = $instructions[$i]['step'];
+            $newStep = ($newInstructions[$i]['title'] ? $newInstructions[$i]['title'] . ': ' : '') . $newInstructions[$i]['description'];
+            if ($oldStep !== $newStep) {
+                $instructionsSame = false;
+                break;
+            }
+        }
+        
+        if ($ingredientsSame && $instructionsSame) {
+            $errorMessage = "⚠️ No changes were made to the recipe! Please modify something first.";
+        }
+    }
+    
+    // إذا ما في خطأ، نحدث قاعدة البيانات
+    if (empty($errorMessage)) {
+        
+        // معالجة الصورة الجديدة
+        if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = 'uploads/';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+            
+            $fileTmpPath = $_FILES['photoFileName']['tmp_name'];
+            $fileExtension = strtolower(pathinfo($_FILES['photoFileName']['name'], PATHINFO_EXTENSION));
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $maxFileSize = 5 * 1024 * 1024;
+            
+            if ($_FILES['photoFileName']['size'] > $maxFileSize) {
+                $errorMessage = "❌ Image file is too large! Maximum size is 5MB.";
+            } elseif (!in_array($fileExtension, $allowedExtensions)) {
+                $errorMessage = "❌ Invalid image format! Allowed: JPG, PNG, GIF, WebP";
+            } else {
+                $cleanName = cleanFileName($name);
+                $randomDigits = getRandomDigits();
+                $newFileName = $cleanName . '_' . $randomDigits . '.' . $fileExtension;
+                $destPath = $uploadDir . $newFileName;
+                
+                if (move_uploaded_file($fileTmpPath, $destPath)) {
+                    if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
+                        unlink($recipe['photoFileName']);
+                    }
+                    $photoFileName = $destPath;
+                } else {
+                    $errorMessage = "❌ Failed to upload image.";
+                }
+            }
+        }
+        
+        // معالجة الفيديو
+        $videoFilePath = $recipe['videoFilePath'];
+        
+        if (empty($errorMessage)) {
+            if ($videoOptionSelected === 'none') {
+                if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
+                    unlink($recipe['videoFilePath']);
+                }
+                $videoFilePath = '';
+            } 
+            elseif ($videoOptionSelected === 'url' && !empty($videoUrlInput)) {
+                if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
+                    unlink($recipe['videoFilePath']);
+                }
+                $videoFilePath = $videoUrlInput;
+            } 
+            elseif ($videoOptionSelected === 'upload' && isset($_FILES['videoFile']) && $_FILES['videoFile']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = 'uploads/';
+                $fileTmpPath = $_FILES['videoFile']['tmp_name'];
+                $fileExtension = strtolower(pathinfo($_FILES['videoFile']['name'], PATHINFO_EXTENSION));
+                $allowedVideoExtensions = ['mp4', 'avi', 'mov', 'mpeg', 'webm'];
+                $maxVideoSize = 50 * 1024 * 1024;
+                
+                if ($_FILES['videoFile']['size'] > $maxVideoSize) {
+                    $errorMessage = "❌ Video file is too large! Maximum size is 50MB.";
+                } elseif (!in_array($fileExtension, $allowedVideoExtensions)) {
+                    $errorMessage = "❌ Invalid video format! Allowed: MP4, AVI, MOV, MPEG, WebM";
+                } else {
+                    $cleanName = cleanFileName($name);
+                    $randomDigits = getRandomDigits();
+                    $newFileName = $cleanName . '_video_' . $randomDigits . '.' . $fileExtension;
+                    $destPath = $uploadDir . $newFileName;
+                    
+                    if (move_uploaded_file($fileTmpPath, $destPath)) {
+                        if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
+                            unlink($recipe['videoFilePath']);
+                        }
+                        $videoFilePath = $destPath;
+                    }
+                }
+            }
+        }
+        
+        // تحديث قاعدة البيانات
+        if (empty($errorMessage)) {
+            $updateSql = "UPDATE recipe SET name='$name', categoryID=$categoryID, description='$description', photoFileName='$photoFileName', videoFilePath='$videoFilePath' WHERE id=$recipeID";
+            
+            if ($conn->query($updateSql)) {
+                
+                // تحديث المكونات
+                $conn->query("DELETE FROM ingredients WHERE recipeID = $recipeID");
+                if (!empty($newIngredients)) {
+                    $stmt = $conn->prepare("INSERT INTO ingredients (recipeID, ingredientName, ingredientQuantity) VALUES (?, ?, ?)");
+                    foreach ($newIngredients as $ing) {
+                        $stmt->bind_param("iss", $recipeID, $ing['name'], $ing['quantity']);
+                        $stmt->execute();
+                    }
+                    $stmt->close();
+                }
+                
+                // تحديث التعليمات
+                $conn->query("DELETE FROM instructions WHERE recipeID = $recipeID");
+                if (!empty($newInstructions)) {
+                    $stmt = $conn->prepare("INSERT INTO instructions (recipeID, step, stepOrder) VALUES (?, ?, ?)");
+                    foreach ($newInstructions as $i => $inst) {
+                        $stepOrder = $i + 1;
+                        $fullStep = !empty($inst['title']) ? $inst['title'] . ': ' . $inst['description'] : $inst['description'];
+                        $stmt->bind_param("isi", $recipeID, $fullStep, $stepOrder);
+                        $stmt->execute();
+                    }
+                    $stmt->close();
+                }
+                
+                $successMessage = "✅ Recipe updated successfully! Redirecting...";
+                
+                echo "<script>
+                        setTimeout(function() {
+                            window.location.href = 'my-recipes.php';
+                        }, 2000);
+                      </script>";
+                
+            } else {
+                $errorMessage = "❌ Database error: " . $conn->error;
+            }
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,7 +333,6 @@
       flex-direction: column;
     }
 
-    /* ===== Header (نفس كود صديقتك بالضبط) ===== */
     header {
       background: linear-gradient(to right, var(--primary), var(--lavender));
       padding: 15px 40px;
@@ -92,7 +379,6 @@
       border-bottom: 3px solid var(--yellow);
     }
 
-    /* ===== Main Content ===== */
     .main-wrapper {
       flex: 1;
       display: flex;
@@ -142,9 +428,21 @@
       padding: 25px;
       border-radius: 14px;
       margin-bottom: 30px;
-      display: none;
+      display: flex;
       align-items: center;
       border: 3px solid var(--mint);
+      animation: slideIn 0.5s ease-out;
+    }
+
+    .error-message {
+      background-color: rgba(255, 154, 162, 0.2);
+      color: var(--dark);
+      padding: 25px;
+      border-radius: 14px;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      border: 3px solid var(--primary);
       animation: slideIn 0.5s ease-out;
     }
 
@@ -153,13 +451,20 @@
       to { opacity: 1; transform: translateX(0); }
     }
 
-    .success-message i {
+    .success-message i, .error-message i {
       margin-right: 15px;
       font-size: 2rem;
+    }
+
+    .success-message i {
       color: var(--mint);
     }
 
-    .success-message span {
+    .error-message i {
+      color: var(--primary);
+    }
+
+    .success-message span, .error-message span {
       font-family: 'Comic Neue', cursive;
       font-size: 1.3rem;
       font-weight: 700;
@@ -226,7 +531,6 @@
 
     input[type="text"],
     input[type="url"],
-    input[type="number"],
     textarea,
     select {
       width: 100%;
@@ -241,7 +545,6 @@
 
     input[type="text"]:focus,
     input[type="url"]:focus,
-    input[type="number"]:focus,
     textarea:focus,
     select:focus {
       border-color: var(--primary);
@@ -264,7 +567,7 @@
     }
 
     .ingredient-row,
-    .instruction-row {
+    .step-row {
       display: flex;
       gap: 15px;
       margin-bottom: 15px;
@@ -272,7 +575,7 @@
     }
 
     .ingredient-name,
-    .instruction-number {
+    .step-number {
       flex: 2;
     }
 
@@ -280,7 +583,7 @@
       flex: 1;
     }
 
-    .instruction-content {
+    .step-content {
       flex: 3;
     }
 
@@ -324,7 +627,7 @@
       transform: translateY(-2px);
     }
 
-    .instruction-controls {
+    .step-controls {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -340,6 +643,18 @@
       cursor: pointer;
       transition: var(--transition);
       background-color: #FFFCF9;
+    }
+
+    .upload-area.required-missing {
+      border-color: var(--primary);
+      background-color: rgba(255, 154, 162, 0.2);
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
     }
 
     .upload-area:hover {
@@ -580,7 +895,6 @@
       color: var(--primary);
     }
 
-    /* ===== Footer (نفس كود صديقتك بالضبط) ===== */
     footer {
       background: var(--mint);
       padding: 25px;
@@ -599,12 +913,12 @@
       }
 
       .ingredient-row,
-      .instruction-row {
+      .step-row {
         flex-direction: column;
         gap: 15px;
       }
 
-      .instruction-controls {
+      .step-controls {
         width: 100%;
         justify-content: flex-start;
         padding-top: 0;
@@ -617,6 +931,11 @@
       .page-header h2 {
         font-size: 2.2rem;
       }
+
+      .page-header p {
+        font-size: 1.1rem;
+        padding: 12px 20px;
+      }
     }
   </style>
 </head>
@@ -624,7 +943,6 @@
 
 <div class="container">
 
-  <!-- ===== HEADER (نفس كود صديقتك بالضبط) ===== -->
   <header>
     <div class="header-left">
       <img src="photo.png" alt="Kids Recipes Logo" class="logo">
@@ -632,90 +950,92 @@
     </div>
 
     <nav>
-      <a href="index.html">Home</a>
+      <a href="index.php">Home</a>
       <a href="#">Users</a>
       <a href="#">Admins</a>
     </nav>
   </header>
 
-  <!-- ===== MAIN CONTENT ===== -->
   <div class="main-wrapper">
 
-    <!-- عنوان الصفحة الأساسي -->
     <div class="page-header">
-      <h2><i class="fas fa-edit"></i> Update Your Recipe</h2>
+      <h2><i class="fas fa-edit"></i> Edit Recipe</h2>
       <p>Update your recipe details and make it even better! ✨</p>
     </div>
 
-    <!-- نموذج تعديل الوصفة -->
     <div class="recipe-container">
-      <div class="success-message" id="successMessage" style="display: none;">
+      
+      <?php if ($successMessage): ?>
+      <div class="success-message">
         <i class="fas fa-check-circle"></i>
-        <span id="successText">Recipe updated successfully! 🎉</span>
+        <span><?php echo $successMessage; ?></span>
       </div>
+      <?php endif; ?>
+      
+      <?php if ($errorMessage): ?>
+      <div class="error-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span><?php echo $errorMessage; ?></span>
+      </div>
+      <?php endif; ?>
 
-      <form class="recipe-form" id="recipeForm">
+      <form class="recipe-form" id="recipeForm" method="POST" enctype="multipart/form-data" style="<?php echo $successMessage ? 'display: none;' : 'display: block;'; ?>">
+        <input type="hidden" name="updateRecipe" value="1">
+        
         <!-- Section 1: Basic Information -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-info-circle"></i> Recipe Information</h2>
 
           <div class="form-group">
-            <label for="recipeName">Recipe Name <span class="required">*</span></label>
-            <input type="text" id="recipeName" name="recipeName" value="Banana Pancakes 🥞" required>
-            <div class="counter"><span id="nameCount">18</span>/50 characters</div>
+            <label for="name">Recipe Name <span class="required">*</span></label>
+            <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($recipe['name']); ?>" required>
+            <div class="counter"><span id="nameCount"><?php echo strlen($recipe['name']); ?></span>/50 characters</div>
           </div>
 
           <div class="form-group">
-            <label for="recipeCategory">Recipe Category <span class="required">*</span></label>
-            <select id="recipeCategory" name="recipeCategory" required>
+            <label for="categoryID">Recipe Category <span class="required">*</span></label>
+            <select id="categoryID" name="categoryID" required>
               <option value="">Select a category</option>
-              <option value="breakfast" selected>Breakfast</option>
-              <option value="lunch">Lunch</option>
-              <option value="dinner">Dinner</option>
-              <option value="snack">Snack</option>
-              <option value="dessert">Dessert</option>
-              <option value="drink">Drink</option>
+              <?php foreach ($categories as $category): ?>
+                <option value="<?php echo $category['id']; ?>" <?php echo ($category['id'] == $recipe['categoryID']) ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($category['categoryname']); ?>
+                </option>
+              <?php endforeach; ?>
             </select>
           </div>
 
           <div class="form-group">
-            <label for="recipeDescription">Recipe Description <span class="required">*</span></label>
-            <textarea id="recipeDescription" name="recipeDescription" required>Fluffy banana pancakes that kids love! Perfect for weekend breakfast.</textarea>
-            <div class="counter"><span id="descCount">68</span>/200 characters</div>
-          </div>
-
-          <div class="likes-section">
-            <label class="likes-label">Likes Count</label>
-            <input type="number" class="likes-input" id="likesCount" name="likesCount" value="10" min="0">
+            <label for="description">Recipe Description <span class="required">*</span></label>
+            <textarea id="description" name="description" required><?php echo htmlspecialchars($recipe['description']); ?></textarea>
+            <div class="counter"><span id="descCount"><?php echo strlen($recipe['description']); ?></span>/200 characters</div>
           </div>
         </div>
 
         <!-- Section 2: Recipe Image -->
         <div class="form-section">
-          <h2 class="section-title"><i class="fas fa-camera"></i> Recipe Image</h2>
+          <h2 class="section-title"><i class="fas fa-camera"></i> Recipe Picture <span class="required">*</span></h2>
 
-          <div class="current-image">
+          <?php if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])): ?>
+          <div class="current-image" id="currentImage">
             <p><strong>Current Image:</strong></p>
-            <img src="banana-pancakes.png" alt="Banana Pancakes">
-            <p><small><i>Banana Pancakes</i> 👩‍🍳</small></p>
+            <img src="<?php echo htmlspecialchars($recipe['photoFileName']); ?>" alt="<?php echo htmlspecialchars($recipe['name']); ?>">
+            <p><small><i><?php echo htmlspecialchars($recipe['name']); ?></i> 👩‍🍳</small></p>
             <div class="image-actions">
               <button type="button" class="change-image-btn" id="changeImageBtn">
                 <i class="fas fa-exchange-alt"></i> Change Image
               </button>
-              <button type="button" class="remove-image-btn" id="removeImageBtn">
-                <i class="fas fa-trash"></i> Remove
-              </button>
             </div>
           </div>
+          <?php endif; ?>
 
-          <div class="form-group" id="uploadSection" style="display: none; margin-top: 20px;">
+          <div class="form-group" id="uploadSection" style="<?php echo (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) ? 'display: none;' : 'display: block; margin-top: 20px;'; ?>">
             <label>Upload New Recipe Image</label>
             <div class="upload-area" id="uploadArea">
               <i class="fas fa-cloud-upload-alt"></i>
               <p>Drag & drop or click to upload new image</p>
               <span>Max size: 5MB (JPG, PNG, GIF, WebP)</span>
             </div>
-            <input type="file" id="recipeImage" name="recipeImage" accept="image/*" style="display: none;">
+            <input type="file" id="recipeImage" name="photoFileName" accept="image/*" style="display: none;">
             <div id="file-name"></div>
           </div>
         </div>
@@ -725,64 +1045,36 @@
           <h2 class="section-title"><i class="fas fa-list-ul"></i> Ingredients</h2>
 
           <div id="ingredientsContainer">
+            <?php if (empty($ingredients)): ?>
             <div class="ingredient-row">
               <div class="form-group ingredient-name">
                 <label>Ingredient Name <span class="required">*</span></label>
-                <input type="text" name="ingredientName[]" value="Banana (mashed) 🍌" required>
+                <input type="text" name="ingredientName[]" placeholder="e.g., Banana 🍌" required>
               </div>
               <div class="form-group ingredient-amount">
                 <label>Amount <span class="required">*</span></label>
-                <input type="text" name="ingredientAmount[]" value="1 large" required>
+                <input type="text" name="ingredientQuantity[]" placeholder="e.g., 1 medium" required>
               </div>
             </div>
-
-            <div class="ingredient-row">
-              <div class="form-group ingredient-name">
-                <label>Ingredient Name <span class="required">*</span></label>
-                <input type="text" name="ingredientName[]" value="Egg 🥚" required>
+            <?php else: ?>
+              <?php foreach ($ingredients as $ingredient): ?>
+              <div class="ingredient-row">
+                <div class="form-group ingredient-name">
+                  <label>Ingredient Name <span class="required">*</span></label>
+                  <input type="text" name="ingredientName[]" value="<?php echo htmlspecialchars($ingredient['ingredientName']); ?>" required>
+                </div>
+                <div class="form-group ingredient-amount">
+                  <label>Amount <span class="required">*</span></label>
+                  <input type="text" name="ingredientQuantity[]" value="<?php echo htmlspecialchars($ingredient['ingredientQuantity']); ?>" required>
+                </div>
+                <div class="step-controls">
+                  <button type="button" class="remove-btn remove-ingredient">
+                    <i class="fas fa-trash"></i> Remove
+                  </button>
+                </div>
               </div>
-              <div class="form-group ingredient-amount">
-                <label>Amount <span class="required">*</span></label>
-                <input type="text" name="ingredientAmount[]" value="1" required>
-              </div>
-              <div class="instruction-controls">
-                <button type="button" class="remove-btn remove-ingredient">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              </div>
-            </div>
-
-            <div class="ingredient-row">
-              <div class="form-group ingredient-name">
-                <label>Ingredient Name <span class="required">*</span></label>
-                <input type="text" name="ingredientName[]" value="Oats" required>
-              </div>
-              <div class="form-group ingredient-amount">
-                <label>Amount <span class="required">*</span></label>
-                <input type="text" name="ingredientAmount[]" value="1/2 cup" required>
-              </div>
-              <div class="instruction-controls">
-                <button type="button" class="remove-btn remove-ingredient">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              </div>
-            </div>
-
-            <div class="ingredient-row">
-              <div class="form-group ingredient-name">
-                <label>Ingredient Name <span class="required">*</span></label>
-                <input type="text" name="ingredientName[]" value="Cinnamon" required>
-              </div>
-              <div class="form-group ingredient-amount">
-                <label>Amount <span class="required">*</span></label>
-                <input type="text" name="ingredientAmount[]" value="1/4 tsp" required>
-              </div>
-              <div class="instruction-controls">
-                <button type="button" class="remove-btn remove-ingredient">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              </div>
-            </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </div>
 
           <button type="button" class="add-btn" id="addIngredient">
@@ -790,78 +1082,58 @@
           </button>
         </div>
 
-        <!-- Section 4: Instructions -->
+        <!-- Section 4: Preparation Steps -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-list-ol"></i> Instructions</h2>
 
-          <div id="instructionsContainer">
-            <div class="instruction-row">
-              <div class="form-group instruction-number">
-                <label>Step #<span class="instruction-counter">1</span></label>
-                <input type="text" name="instructionTitle[]" value="Mash Banana">
+          <div id="stepsContainer">
+            <?php if (empty($instructions)): ?>
+            <div class="step-row">
+              <div class="form-group step-number">
+                <label>Step #<span class="step-counter">1</span></label>
+                <input type="text" name="stepTitle[]" placeholder="Step title (optional)">
               </div>
-              <div class="form-group instruction-content">
-                <label>Instruction Description <span class="required">*</span></label>
-                <textarea name="instructionDescription[]" rows="2" required>Mash the banana in a bowl until smooth.</textarea>
+              <div class="form-group step-content">
+                <label>Step Description <span class="required">*</span></label>
+                <textarea name="stepDescription[]" placeholder="Write step in a fun way for kids! 🎯" rows="2" required></textarea>
               </div>
-              <div class="instruction-controls">
-                <button type="button" class="remove-btn remove-instruction">
+              <div class="step-controls">
+                <button type="button" class="remove-btn remove-step" style="display: none;">
                   <i class="fas fa-trash"></i> Remove
                 </button>
               </div>
             </div>
-
-            <div class="instruction-row">
-              <div class="form-group instruction-number">
-                <label>Step #<span class="instruction-counter">2</span></label>
-                <input type="text" name="instructionTitle[]" value="Add Egg">
+            <?php else: ?>
+              <?php foreach ($instructions as $index => $instruction): 
+                $stepText = $instruction['step'];
+                $stepTitle = '';
+                $stepDesc = $stepText;
+                if (strpos($stepText, ': ') !== false) {
+                    $stepTitle = substr($stepText, 0, strpos($stepText, ': '));
+                    $stepDesc = substr($stepText, strpos($stepText, ': ') + 2);
+                }
+              ?>
+              <div class="step-row">
+                <div class="form-group step-number">
+                  <label>Step #<span class="step-counter"><?php echo $index + 1; ?></span></label>
+                  <input type="text" name="stepTitle[]" value="<?php echo htmlspecialchars($stepTitle); ?>" placeholder="Step title (optional)">
+                </div>
+                <div class="form-group step-content">
+                  <label>Step Description <span class="required">*</span></label>
+                  <textarea name="stepDescription[]" rows="2" required><?php echo htmlspecialchars($stepDesc); ?></textarea>
+                </div>
+                <div class="step-controls">
+                  <button type="button" class="remove-btn remove-step">
+                    <i class="fas fa-trash"></i> Remove
+                  </button>
+                </div>
               </div>
-              <div class="form-group instruction-content">
-                <label>Instruction Description <span class="required">*</span></label>
-                <textarea name="instructionDescription[]" rows="2" required>Add the egg and mix well.</textarea>
-              </div>
-              <div class="instruction-controls">
-                <button type="button" class="remove-btn remove-instruction">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              </div>
-            </div>
-
-            <div class="instruction-row">
-              <div class="form-group instruction-number">
-                <label>Step #<span class="instruction-counter">3</span></label>
-                <input type="text" name="instructionTitle[]" value="Mix Ingredients">
-              </div>
-              <div class="form-group instruction-content">
-                <label>Instruction Description <span class="required">*</span></label>
-                <textarea name="instructionDescription[]" rows="2" required>Add oats and cinnamon and stir until combined.</textarea>
-              </div>
-              <div class="instruction-controls">
-                <button type="button" class="remove-btn remove-instruction">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              </div>
-            </div>
-
-            <div class="instruction-row">
-              <div class="form-group instruction-number">
-                <label>Step #<span class="instruction-counter">4</span></label>
-                <input type="text" name="instructionTitle[]" value="Cook Pancakes">
-              </div>
-              <div class="form-group instruction-content">
-                <label>Instruction Description <span class="required">*</span></label>
-                <textarea name="instructionDescription[]" rows="2" required>Cook small pancakes on a non-stick pan until golden brown on both sides.</textarea>
-              </div>
-              <div class="instruction-controls">
-                <button type="button" class="remove-btn remove-instruction">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              </div>
-            </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </div>
 
-          <button type="button" class="add-btn" id="addInstruction">
-            <i class="fas fa-plus"></i> Add Another Instruction
+          <button type="button" class="add-btn" id="addStep">
+            <i class="fas fa-plus"></i> Add Another Step
           </button>
         </div>
 
@@ -871,53 +1143,48 @@
 
           <div class="video-options">
             <div class="video-option">
-              <input type="radio" id="videoNone" name="videoOption" value="none" checked>
+              <input type="radio" id="videoNone" name="videoOption" value="none" <?php echo $videoOption === 'none' ? 'checked' : ''; ?>>
               <label for="videoNone"><i class="fas fa-times-circle"></i> No Video</label>
             </div>
             <div class="video-option">
-              <input type="radio" id="videoURL" name="videoOption" value="url">
+              <input type="radio" id="videoURL" name="videoOption" value="url" <?php echo $videoOption === 'url' ? 'checked' : ''; ?>>
               <label for="videoURL"><i class="fas fa-link"></i> Video Link</label>
             </div>
             <div class="video-option">
-              <input type="radio" id="videoUpload" name="videoOption" value="upload">
+              <input type="radio" id="videoUpload" name="videoOption" value="upload" <?php echo $videoOption === 'upload' ? 'checked' : ''; ?>>
               <label for="videoUpload"><i class="fas fa-upload"></i> Upload Video</label>
             </div>
           </div>
 
-          <div class="video-input" id="urlInput">
+          <div class="video-input" id="urlInput" style="display: <?php echo $videoOption === 'url' ? 'block' : 'none'; ?>;">
             <div class="form-group">
               <label for="videoUrl">Video URL</label>
-              <input type="url" id="videoUrl" name="videoUrl" placeholder="https://www.youtube.com/watch?v=...">
+              <input type="url" id="videoUrl" name="videoUrl" placeholder="https://www.youtube.com/watch?v=..." value="<?php echo htmlspecialchars($videoUrl); ?>">
             </div>
           </div>
 
-          <div class="video-input" id="uploadInput">
+          <div class="video-input" id="uploadInput" style="display: <?php echo $videoOption === 'upload' ? 'block' : 'none'; ?>;">
             <div class="form-group">
               <label for="videoFile">Video File</label>
               <input type="file" id="videoFile" name="videoFile" accept="video/*">
-              <div class="counter">Max size: 50MB (MP4, AVI, MOV, MPEG)</div>
+              <div class="counter">Max size: 50MB (MP4, AVI, MOV, MPEG, WebM)</div>
             </div>
           </div>
         </div>
 
         <!-- Form Actions -->
         <div class="form-actions">
-          <button type="submit" class="submit-btn">
+          <button type="submit" name="updateRecipe" class="submit-btn">
             <i class="fas fa-save"></i> Update Recipe
-          </button>
-          <button type="reset" class="reset-btn" id="resetBtn">
-            <i class="fas fa-redo"></i> Reset Changes
           </button>
           <button type="button" class="cancel-btn" id="cancelBtn">
             <i class="fas fa-times"></i> Cancel
-          </button> 
-          
+          </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ===== FOOTER ===== -->
   <footer>
     © 2026 Kids Recipes — Made with 💖 for little ones
   </footer>
@@ -925,236 +1192,198 @@
 </div>
 
 <script>
-  // ==================== معالجة النموذج ====================
   const recipeForm = document.getElementById('recipeForm');
-  const successMessage = document.getElementById('successMessage');
-  const successText = document.getElementById('successText');
-
-  // Counters
-  const nameCount = document.getElementById('nameCount');
-  const descCount = document.getElementById('descCount');
-  const recipeNameInput = document.getElementById('recipeName');
-  const recipeDescInput = document.getElementById('recipeDescription');
-
-  recipeNameInput.addEventListener('input', function() {
-    nameCount.textContent = this.value.length;
-    nameCount.style.color = this.value.length > 50 ? '#FF9AA2' : '#B5EAD7';
-  });
-
-  recipeDescInput.addEventListener('input', function() {
-    descCount.textContent = this.value.length;
-    descCount.style.color = this.value.length > 200 ? '#FF9AA2' : '#B5EAD7';
-  });
-
-  // Ingredients
-  let ingredientCount = 4;
   const ingredientsContainer = document.getElementById('ingredientsContainer');
+  const stepsContainer = document.getElementById('stepsContainer');
   const addIngredientBtn = document.getElementById('addIngredient');
-
-  addIngredientBtn.addEventListener('click', function() {
-    ingredientCount++;
-
-    const newIngredientRow = document.createElement('div');
-    newIngredientRow.className = 'ingredient-row';
-    newIngredientRow.innerHTML = `
-      <div class="form-group ingredient-name">
-        <label>Ingredient Name <span class="required">*</span></label>
-        <input type="text" name="ingredientName[]" placeholder="e.g., Honey 🍯" required>
-      </div>
-      <div class="form-group ingredient-amount">
-        <label>Amount <span class="required">*</span></label>
-        <input type="text" name="ingredientAmount[]" placeholder="e.g., 1 tbsp" required>
-      </div>
-      <div class="instruction-controls">
-        <button type="button" class="remove-btn remove-ingredient">
-          <i class="fas fa-trash"></i> Remove
-        </button>
-      </div>
-    `;
-
-    ingredientsContainer.appendChild(newIngredientRow);
-
-    newIngredientRow.querySelector('.remove-ingredient').addEventListener('click', function() {
-      ingredientsContainer.removeChild(newIngredientRow);
-      ingredientCount--;
-    });
-  });
-
-  // Instructions
-  let instructionCount = 4;
-  const instructionsContainer = document.getElementById('instructionsContainer');
-  const addInstructionBtn = document.getElementById('addInstruction');
-
-  addInstructionBtn.addEventListener('click', function() {
-    instructionCount++;
-
-    const newInstructionRow = document.createElement('div');
-    newInstructionRow.className = 'instruction-row';
-    newInstructionRow.innerHTML = `
-      <div class="form-group instruction-number">
-        <label>Step #<span class="instruction-counter">${instructionCount}</span></label>
-        <input type="text" name="instructionTitle[]" placeholder="Step title (optional)">
-      </div>
-      <div class="form-group instruction-content">
-        <label>Instruction Description <span class="required">*</span></label>
-        <textarea name="instructionDescription[]" placeholder="Write detailed instructions..." rows="2" required></textarea>
-      </div>
-      <div class="instruction-controls">
-        <button type="button" class="remove-btn remove-instruction">
-          <i class="fas fa-trash"></i> Remove
-        </button>
-      </div>
-    `;
-
-    instructionsContainer.appendChild(newInstructionRow);
-
-    newInstructionRow.querySelector('.remove-instruction').addEventListener('click', function() {
-      instructionsContainer.removeChild(newInstructionRow);
-      instructionCount--;
-      updateInstructionNumbers();
-    });
-  });
-
-  function updateInstructionNumbers() {
-    const instructionCounters = document.querySelectorAll('.instruction-counter');
-    instructionCounters.forEach((counter, index) => {
-      counter.textContent = index + 1;
-    });
-  }
-
-  // Image Actions
-  document.getElementById('changeImageBtn').addEventListener('click', function() {
-    document.getElementById('uploadSection').style.display = 'block';
-  });
-
-  document.getElementById('removeImageBtn').addEventListener('click', function() {
-    if (confirm('Are you sure you want to remove the current image?')) {
-      document.querySelector('.current-image').style.display = 'none';
-      document.getElementById('uploadSection').style.display = 'block';
-    }
-  });
-
-  // Image Upload
+  const addStepBtn = document.getElementById('addStep');
   const uploadArea = document.getElementById('uploadArea');
   const recipeImage = document.getElementById('recipeImage');
   const fileNameDisplay = document.getElementById('file-name');
 
-  uploadArea.addEventListener('click', function() {
-    recipeImage.click();
-  });
+  const nameCount = document.getElementById('nameCount');
+  const descCount = document.getElementById('descCount');
+  const recipeNameInput = document.getElementById('name');
+  const recipeDescInput = document.getElementById('description');
 
-  recipeImage.addEventListener('change', function() {
-    if (this.files.length > 0) {
-      const fileName = this.files[0].name;
-      fileNameDisplay.innerHTML = `<i class="fas fa-check-circle"></i> Selected: <strong>${fileName}</strong>`;
-      uploadArea.style.borderColor = '#B5EAD7';
-      uploadArea.style.backgroundColor = 'rgba(181, 234, 215, 0.1)';
-    }
-  });
-
-  // Video Options
   const videoOptions = document.querySelectorAll('input[name="videoOption"]');
   const urlInput = document.getElementById('urlInput');
   const uploadInput = document.getElementById('uploadInput');
 
-  videoOptions.forEach(option => {
-    option.addEventListener('change', function() {
-      urlInput.classList.remove('active');
-      uploadInput.classList.remove('active');
+  if (recipeNameInput) {
+    recipeNameInput.addEventListener('input', function() {
+      nameCount.textContent = this.value.length;
+      nameCount.style.color = this.value.length > 50 ? '#FF9AA2' : '#B5EAD7';
+    });
+  }
 
-      if (this.value === 'url') {
-        urlInput.classList.add('active');
-      } else if (this.value === 'upload') {
-        uploadInput.classList.add('active');
+  if (recipeDescInput) {
+    recipeDescInput.addEventListener('input', function() {
+      descCount.textContent = this.value.length;
+      descCount.style.color = this.value.length > 200 ? '#FF9AA2' : '#B5EAD7';
+    });
+  }
+
+  if (uploadArea) {
+    uploadArea.addEventListener('click', function() {
+      recipeImage.click();
+    });
+  }
+
+  if (recipeImage) {
+    recipeImage.addEventListener('change', function() {
+      if (this.files.length > 0) {
+        const fileName = this.files[0].name;
+        fileNameDisplay.innerHTML = `<i class="fas fa-check-circle"></i> Selected: <strong>${fileName}</strong>`;
+        uploadArea.style.borderColor = '#B5EAD7';
+        uploadArea.style.backgroundColor = 'rgba(181, 234, 215, 0.1)';
       }
     });
-  });
+  }
+
+  // Add ingredient
+  let ingredientCount = <?php echo count($ingredients) > 0 ? count($ingredients) : 1; ?>;
+
+  if (addIngredientBtn) {
+    addIngredientBtn.addEventListener('click', function() {
+      ingredientCount++;
+
+      const newIngredientRow = document.createElement('div');
+      newIngredientRow.className = 'ingredient-row';
+      newIngredientRow.innerHTML = `
+        <div class="form-group ingredient-name">
+          <label>Ingredient Name <span class="required">*</span></label>
+          <input type="text" name="ingredientName[]" placeholder="e.g., Cheese 🧀" required>
+        </div>
+        <div class="form-group ingredient-amount">
+          <label>Amount <span class="required">*</span></label>
+          <input type="text" name="ingredientQuantity[]" placeholder="e.g., 2 slices" required>
+        </div>
+        <div class="step-controls">
+          <button type="button" class="remove-btn remove-ingredient">
+            <i class="fas fa-trash"></i> Remove
+          </button>
+        </div>
+      `;
+
+      ingredientsContainer.appendChild(newIngredientRow);
+
+      const removeBtn = newIngredientRow.querySelector('.remove-ingredient');
+      removeBtn.addEventListener('click', function() {
+        ingredientsContainer.removeChild(newIngredientRow);
+        ingredientCount--;
+      });
+    });
+  }
+
+  // Add step
+  let stepCount = <?php echo count($instructions) > 0 ? count($instructions) : 1; ?>;
+
+  function updateStepNumbers() {
+    const stepCounters = document.querySelectorAll('.step-counter');
+    stepCounters.forEach((counter, index) => {
+      counter.textContent = index + 1;
+    });
+  }
+
+  if (addStepBtn) {
+    addStepBtn.addEventListener('click', function() {
+      stepCount++;
+
+      const newStepRow = document.createElement('div');
+      newStepRow.className = 'step-row';
+      newStepRow.innerHTML = `
+        <div class="form-group step-number">
+          <label>Step #<span class="step-counter">${stepCount}</span></label>
+          <input type="text" name="stepTitle[]" placeholder="Step title (optional)">
+        </div>
+        <div class="form-group step-content">
+          <label>Step Description <span class="required">*</span></label>
+          <textarea name="stepDescription[]" placeholder="Write step in a fun way for kids! 🎯" rows="2" required></textarea>
+        </div>
+        <div class="step-controls">
+          <button type="button" class="remove-btn remove-step">
+            <i class="fas fa-trash"></i> Remove
+          </button>
+        </div>
+      `;
+
+      stepsContainer.appendChild(newStepRow);
+
+      const removeBtn = newStepRow.querySelector('.remove-step');
+      removeBtn.addEventListener('click', function() {
+        stepsContainer.removeChild(newStepRow);
+        stepCount--;
+        updateStepNumbers();
+      });
+
+      if (stepCount > 1) {
+        const firstRemoveBtn = document.querySelectorAll('.remove-step')[0];
+        if (firstRemoveBtn) firstRemoveBtn.style.display = 'block';
+      }
+      updateStepNumbers();
+    });
+  }
+
+  // Video options
+  if (videoOptions.length) {
+    videoOptions.forEach(option => {
+      option.addEventListener('change', function() {
+        urlInput.classList.remove('active');
+        uploadInput.classList.remove('active');
+
+        if (this.value === 'url') {
+          urlInput.classList.add('active');
+        } else if (this.value === 'upload') {
+          uploadInput.classList.add('active');
+        }
+      });
+    });
+  }
+
+  // Cancel button
+  const cancelBtn = document.getElementById('cancelBtn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function() {
+      window.location.href = 'my-recipes.php';
+    });
+  }
+
+  // Change image button
+  const changeImageBtn = document.getElementById('changeImageBtn');
+  const currentImage = document.getElementById('currentImage');
+  const uploadSection = document.getElementById('uploadSection');
+
+  if (changeImageBtn) {
+    changeImageBtn.addEventListener('click', function() {
+      if (currentImage) currentImage.style.display = 'none';
+      if (uploadSection) uploadSection.style.display = 'block';
+    });
+  }
 
   // Remove existing ingredients
   document.querySelectorAll('.remove-ingredient').forEach(btn => {
     btn.addEventListener('click', function() {
-      const ingredientRow = this.closest('.ingredient-row');
-      if (ingredientRow && ingredientCount > 1) {
-        ingredientsContainer.removeChild(ingredientRow);
+      const row = this.closest('.ingredient-row');
+      if (row && ingredientCount > 1) {
+        ingredientsContainer.removeChild(row);
         ingredientCount--;
       }
     });
   });
 
-  // Remove existing instructions
-  document.querySelectorAll('.remove-instruction').forEach(btn => {
+  // Remove existing steps
+  document.querySelectorAll('.remove-step').forEach(btn => {
     btn.addEventListener('click', function() {
-      const instructionRow = this.closest('.instruction-row');
-      if (instructionRow && instructionCount > 1) {
-        instructionsContainer.removeChild(instructionRow);
-        instructionCount--;
-        updateInstructionNumbers();
+      const row = this.closest('.step-row');
+      if (row && stepCount > 1) {
+        stepsContainer.removeChild(row);
+        stepCount--;
+        updateStepNumbers();
       }
     });
   });
 
-  // Form Submission
-  recipeForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const recipeData = {
-      name: document.getElementById('recipeName').value,
-      category: document.getElementById('recipeCategory').value,
-      description: document.getElementById('recipeDescription').value,
-      likes: parseInt(document.getElementById('likesCount').value) || 0,
-      videoOption: document.querySelector('input[name="videoOption"]:checked')?.value || 'none',
-      videoUrl: document.getElementById('videoUrl')?.value || ''
-    };
-
-    successText.textContent = `Recipe "${recipeData.name}" updated with ${recipeData.likes} likes! 🎉`;
-    recipeForm.style.display = 'none';
-    successMessage.style.display = 'flex';
-
-    setTimeout(() => {
-      window.location.href = 'recipes-list.html';
-    }, 3000);
-  });
-
-// Form Submission
-recipeForm.addEventListener('submit', function(e) {
-  e.preventDefault();
-
-  const recipeData = {
-    name: document.getElementById('recipeName').value,
-    // ... باقي البيانات
-  };
-
-  successText.textContent = `Recipe "${recipeData.name}" updated with ${recipeData.likes} likes! 🎉`;
-  recipeForm.style.display = 'none';
-  successMessage.style.display = 'flex';
-  
-  // بعد ثانيتين يروح لصفحة الوصفات
-  setTimeout(() => {
-    window.location.href = 'my-recipes.html';
-  }, 2000);
-});
-
-  // Reset Button
-  document.getElementById('resetBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-
-    if (confirm('Are you sure you want to reset all changes to original values?')) {
-      document.getElementById('recipeName').value = "Banana Pancakes 🥞";
-      document.getElementById('recipeCategory').value = "breakfast";
-      document.getElementById('recipeDescription').value = "Fluffy banana pancakes that kids love! Perfect for weekend breakfast.";
-      document.getElementById('likesCount').value = "10";
-
-      nameCount.textContent = "Banana Pancakes 🥞".length;
-      descCount.textContent = "Fluffy banana pancakes that kids love! Perfect for weekend breakfast.".length;
-    }
-  });
-
-  // Cancel Button
-document.getElementById('cancelBtn').addEventListener('click', function() {
-  window.location.href = 'my-recipes.html';
-});
-
-  // Function for active nav (من كود صديقتك)
   function setActive(element) {
     const links = document.querySelectorAll("nav a");
     links.forEach(link => link.classList.remove("active"));
@@ -1164,4 +1393,3 @@ document.getElementById('cancelBtn').addEventListener('click', function() {
 
 </body>
 </html>
-
