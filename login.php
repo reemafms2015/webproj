@@ -74,10 +74,10 @@ $_SESSION["userType"] = $user["userType"];
 
 // Redirect based on type
 if (strtolower($user["userType"]) === "admin") {
-    header("Location: admin.html");
+    header("Location: admin.php?success=Login successful");
     exit();
 } else {
-    header("Location: user.php");
+    header("Location: user.php?success=Login successful");
     exit();
 }
 ?>
