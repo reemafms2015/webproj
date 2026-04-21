@@ -56,6 +56,20 @@ function cleanFileName($name) {
     return substr($clean, 0, 20);
 }
 
+function getUploadPath($type) {
+    if ($type === 'image') {
+        $dir = 'uploads/images/';
+    } elseif ($type === 'video') {
+        $dir = 'uploads/videos/';
+    } else {
+        $dir = 'uploads/';
+    }
+    if (!is_dir($dir)) {
+        mkdir($dir, 0777, true);
+    }
+    return $dir;
+}
+
 $videoOption = 'none';
 $videoUrl = '';
 if (!empty($recipe['videoFilePath'])) {
@@ -103,8 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
     $photoError = false;
     
     if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = 'uploads/';
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+        $uploadDir = getUploadPath('image');
         
         $fileTmpPath = $_FILES['photoFileName']['tmp_name'];
         $fileExtension = strtolower(pathinfo($_FILES['photoFileName']['name'], PATHINFO_EXTENSION));
@@ -148,26 +161,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
             }
             $videoFilePath = '';
         } 
-        
-        
-        
-        
-        
-        
-        
         elseif ($videoOptionSelected === 'url' && !empty($videoUrlInput)) {
-    if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
-        unlink($recipe['videoFilePath']);
-    }
-    if (strpos($videoUrlInput, '?') !== false) {
-        $videoFilePath = $videoUrlInput . '&recipe_id=' . $recipeID;
-    } else {
-        $videoFilePath = $videoUrlInput . '?recipe_id=' . $recipeID;
-    }
-}
-        
+            if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
+                unlink($recipe['videoFilePath']);
+            }
+            if (strpos($videoUrlInput, '?') !== false) {
+                $videoFilePath = $videoUrlInput . '&recipe_id=' . $recipeID;
+            } else {
+                $videoFilePath = $videoUrlInput . '?recipe_id=' . $recipeID;
+            }
+        }
         elseif ($videoOptionSelected === 'upload' && isset($_FILES['videoFile']) && $_FILES['videoFile']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = 'uploads/';
+            $uploadDir = getUploadPath('video');
+            
             $fileTmpPath = $_FILES['videoFile']['tmp_name'];
             $fileExtension = strtolower(pathinfo($_FILES['videoFile']['name'], PATHINFO_EXTENSION));
             $allowedVideoExtensions = ['mp4', 'avi', 'mov', 'mpeg', 'webm'];
@@ -652,7 +658,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
           </div>
         </div>
 
-        <!-- Section 2: Recipe Image (REQUIRED) -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-camera"></i> Recipe Picture <span class="required">*</span></h2>
 
@@ -843,7 +848,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
   const urlInput = document.getElementById('urlInput');
   const uploadInput = document.getElementById('uploadInput');
 
-  // Variables to track if there's a photo
   let hasExistingPhoto = <?php echo (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) ? 'true' : 'false'; ?>;
   let newPhotoSelected = false;
 
@@ -879,10 +883,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
     });
   }
 
-  // Client-side validation before submit - PHOTO IS REQUIRED!
   if (recipeForm) {
     recipeForm.addEventListener('submit', function(e) {
-      // Check if there's an existing photo OR a new photo selected
       if (!hasExistingPhoto && !newPhotoSelected) {
         e.preventDefault();
         if (photoErrorMsg) photoErrorMsg.style.display = 'block';
