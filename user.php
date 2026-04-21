@@ -37,8 +37,10 @@ if (strtolower($user['userType']) !== 'user') {
 /*User photo*/
 $userPhoto = !empty($user['photoFileName']) ? $user['photoFileName'] : "profile.png";
 
-if (!file_exists(__DIR__ . "/" . $userPhoto)) {
-    $userPhoto = "profile.png";
+if (!empty($user['photoFileName']) && file_exists(__DIR__ . "/images/users/" . $user['photoFileName'])) {
+    $userPhotoPath = "images/users/" . $user['photoFileName'];
+} else {
+    $userPhotoPath = "profile.png";
 }
 
 /* Count user recipes
@@ -142,6 +144,11 @@ function getRecipePhoto($recipeName, $photoFileName) {
     }
 
     $name = strtolower(trim($recipeName));
+    
+    if ($name === "chicken & rise") {
+
+        return "chicken-rice.png";
+    }
 
     if ($name === "bananapancake") {
         return "banana-pancakes.png";
@@ -433,7 +440,7 @@ a:hover {
     </div>
 
     <nav>
-        <a href="index.php">Home</a>
+        <a href="index.html">Home</a>
         <a href="user.php" class="active">Users</a>
         <a href="admin.php">Admins</a>
     </nav>
@@ -450,7 +457,7 @@ a:hover {
         <!-- User Information -->
         <div class="gridTwo">
             <div class="card center">
-                <img src="<?php echo htmlspecialchars($userPhoto); ?>" class="profileImg" alt="User Photo">
+                <img src="<?php echo htmlspecialchars($userPhotoPath); ?>" class="profileImg" alt="User Photo">
                 <h3><?php echo htmlspecialchars($user['firstName'] . " " . $user['lastName']); ?></h3>
                 <p><?php echo htmlspecialchars($user['emailAddress']); ?></p>
             </div>
@@ -499,7 +506,7 @@ a:hover {
                     ?>
                         <tr>
                             <td>
-                                <a href="viewRecipe.php?id=<?php echo $recipe['id']; ?>">
+                                <a href="view-recipe.php?id=<?php echo $recipe['id']; ?>">
                                     <?php echo htmlspecialchars($recipe['name']); ?>
                                 </a>
                             </td>
@@ -537,7 +544,7 @@ a:hover {
                     ?>
                         <tr>
                             <td>
-                                <a href="viewRecipe.php?id=<?php echo $fav['id']; ?>">
+                                <a href="view-recipe.php?id=<?php echo $fav['id']; ?>">
                                     <?php echo htmlspecialchars($fav['name']); ?>
                                 </a>
                             </td>
