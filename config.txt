@@ -1,0 +1,4 @@
+Database Name: recipedb
+Username: root
+Password: 
+Host: localhost
