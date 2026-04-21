@@ -1,18 +1,15 @@
 <?php
 session_start();
 
-// عرض الأخطاء للتصحيح
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// الاتصال بقاعدة البيانات (MAMP)
 $conn = new mysqli("localhost", "root", "root", "recipedb", 8889);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// جلب الفئات من قاعدة البيانات
 $categoriesQuery = "SELECT id, categoryname FROM recipecategory ORDER BY id";
 $categoriesResult = $conn->query($categoriesQuery);
 $categories = [];
@@ -22,44 +19,36 @@ if ($categoriesResult->num_rows > 0) {
     }
 }
 
-// حل مؤقت للمستخدم
 $userID = $_SESSION['userID'] ?? 2;
 
 $successMessage = '';
 $errorMessage = '';
 
-// دالة لتوليد 4 أرقام عشوائية
 function getRandomDigits() {
     return rand(1000, 9999);
 }
 
-// دالة لتنظيف اسم الملف
 function cleanFileName($name) {
     $clean = preg_replace('/[^a-zA-Z0-9]/', '_', $name);
     $clean = substr($clean, 0, 20);
     return $clean;
 }
 
-// معالجة إرسال النموذج
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     
-    // التحقق من وجود الصورة
     if (!isset($_FILES['photoFileName']) || $_FILES['photoFileName']['error'] === UPLOAD_ERR_NO_FILE) {
         $errorMessage = "❌ Please upload a recipe image! The picture is required. 📸";
     } else {
         
-        // الحصول على البيانات وتنظيفها
         $name = $conn->real_escape_string($_POST['name']);
         $categoryID = (int)$_POST['categoryID'];
         $description = $conn->real_escape_string($_POST['description']);
         
-        // متغيرات للصور والفيديو
         $photoFileName = "";
         $videoFilePath = "";
         $photoError = false;
         $videoError = false;
         
-        // معالجة رفع الصورة
         if ($_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = 'uploads/';
             if (!is_dir($uploadDir)) {
@@ -71,18 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
             $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             $maxFileSize = 5 * 1024 * 1024; // 5MB
             
-            // التحقق من حجم الصورة
             if ($_FILES['photoFileName']['size'] > $maxFileSize) {
                 $errorMessage = "❌ Image file is too large! Maximum size is 5MB.";
                 $photoError = true;
             }
-            // التحقق من امتداد الصورة
             elseif (!in_array($fileExtension, $allowedExtensions)) {
                 $errorMessage = "❌ Invalid image format! Please use JPG, PNG, GIF, or WebP.";
                 $photoError = true;
             }
             else {
-                // توليد اسم يونيك للصورة: cleanName_1234.extension
                 $cleanName = cleanFileName($name);
                 $randomDigits = getRandomDigits();
                 $newFileName = $cleanName . '_' . $randomDigits . '.' . $fileExtension;
@@ -97,10 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
             }
         }
         
-        // إذا لم يكن هناك خطأ في الصورة، تابع معالجة الفيديو
         if (!$photoError && empty($errorMessage)) {
             
-            // معالجة الفيديو (اختياري)
             if (isset($_POST['videoOption'])) {
                 if ($_POST['videoOption'] === 'url' && !empty($_POST['videoUrl'])) {
                     $videoFilePath = $conn->real_escape_string($_POST['videoUrl']);
@@ -113,18 +97,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                     $allowedVideoExtensions = ['mp4', 'avi', 'mov', 'mpeg', 'webm'];
                     $maxVideoSize = 50 * 1024 * 1024; // 50MB
                     
-                    // التحقق من حجم الفيديو
                     if ($_FILES['videoFile']['size'] > $maxVideoSize) {
                         $errorMessage = "❌ Video file is too large! Maximum size is 50MB.";
                         $videoError = true;
                     }
-                    // التحقق من امتداد الفيديو
                     elseif (!in_array($fileExtension, $allowedVideoExtensions)) {
                         $errorMessage = "❌ Invalid video format! Please use MP4, AVI, MOV, MPEG, or WebM.";
                         $videoError = true;
                     }
                     else {
-                        // توليد اسم يونيك للفيديو: cleanName_video_1234.extension
                         $cleanName = cleanFileName($name);
                         $randomDigits = getRandomDigits();
                         $newFileName = $cleanName . '_video_' . $randomDigits . '.' . $fileExtension;
@@ -141,17 +122,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
             }
         }
         
-        // إذا لم يكن هناك خطأ في الصورة والفيديو، تابع حفظ البيانات
         if (!$photoError && !$videoError && empty($errorMessage)) {
             
-            // إدخال الوصفة في قاعدة البيانات
             $insertRecipeQuery = "INSERT INTO recipe (userID, categoryID, name, description, photoFileName, videoFilePath) 
                                   VALUES ($userID, $categoryID, '$name', '$description', '$photoFileName', '$videoFilePath')";
             
             if ($conn->query($insertRecipeQuery) === TRUE) {
                 $recipeID = $conn->insert_id;
                 
-                // إدخال المكونات
                 if (!empty($_POST['ingredientName'])) {
                     $stmt = $conn->prepare("INSERT INTO ingredients (recipeID, ingredientName, ingredientQuantity) VALUES (?, ?, ?)");
                     
@@ -165,7 +143,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                     $stmt->close();
                 }
                 
-                // إدخال التعليمات
                 if (!empty($_POST['stepDescription'])) {
                     $stmt = $conn->prepare("INSERT INTO instructions (recipeID, step, stepOrder) VALUES (?, ?, ?)");
                     
@@ -183,7 +160,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                 
                 $successMessage = "✅ Recipe '$name' has been saved successfully! 🎉";
                 
-                // إعادة التوجيه بعد 2 ثانية
                 echo "<script>
                         setTimeout(function() {
                             window.location.href = 'myrecipes.php';
