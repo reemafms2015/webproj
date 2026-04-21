@@ -64,7 +64,7 @@ a{color:inherit;text-decoration:none;} .recipe-link{color:#5D576B;font-weight:60
 <body>
 <header class="site-header">
 <div class="header-left"><img src="photo.png" alt="Kids Recipes Logo" class="logo"><h1>LittleChefs</h1></div>
-<nav><a href="index.php">Home</a><a href="user.php">Users</a><a class="active" href="admin.php">Admins</a></nav>
+<nav><a href="index.html">Home</a><a href="user.php">Users</a><a class="active" href="admin.php">Admins</a></nav>
 </header>
 <div class="page-pad"><div class="container">
 <div class="admin-header"><div class="topbar"><div class="welcome">Welcome <?php echo $admin['firstName']; ?></div><a href="logout.php"><div class="logout">Logout</div></a></div></div>
