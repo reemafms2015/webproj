@@ -60,10 +60,7 @@ $user = $userResult->fetch_assoc();
 
 $storedPassword = $user["password"];
 
-if (
-    !password_verify($password, $storedPassword) &&
-    $password !== $storedPassword
-) {
+if (!password_verify($password, $storedPassword) && $password !== $storedPassword) {
     header("Location: login.html?error=Incorrect email or password");
     exit();
 }
