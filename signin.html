@@ -274,7 +274,10 @@
   <main>
     <section class="card">
       <h2>Create Your Account</h2>
-      <p>Join the LittleChefs community for tasty ideas.</p>
+
+<div id="messageBox" style="display:none; margin-bottom:15px; padding:12px; border-radius:10px; text-align:center; font-weight:700;"></div>
+
+<p>Join the LittleChefs community for tasty ideas.</p>
 
     <form action="signin.php" method="POST" enctype="multipart/form-data">
   <!-- Profile Picture Upload -->
@@ -340,24 +343,28 @@
 
 </div>
 <script>
-  const profileInput = document.getElementById("profilePic");
-  const preview = document.getElementById("imagePreview");
+  const params = new URLSearchParams(window.location.search);
+  const messageBox = document.getElementById("messageBox");
 
-  profileInput.addEventListener("change", function () {
-    const file = this.files[0];
+  if (params.has("error")) {
+    messageBox.style.display = "block";
+    messageBox.style.backgroundColor = "#ffe0e0";
+    messageBox.style.color = "#b30000";
+    messageBox.style.border = "2px solid #ffb3b3";
+    messageBox.textContent = params.get("error");
+  }
 
-    if (file) {
-      const reader = new FileReader();
-
-      reader.onload = function () {
-        preview.innerHTML = `<img src="${this.result}" />`;
-      };
-
-      reader.readAsDataURL(file);
-    }
-  });
+  if (params.has("success")) {
+    messageBox.style.display = "block";
+    messageBox.style.backgroundColor = "#e3fbe3";
+    messageBox.style.color = "#1f7a1f";
+    messageBox.style.border = "2px solid #b7e4b8";
+    messageBox.textContent = params.get("success");
+  }
 </script>
 
+</body>
+</html>
 
 </body>
 </html>
