@@ -100,136 +100,168 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
     }
     
     $photoFileName = $recipe['photoFileName'];
-    $hasPhoto = false;
     $photoError = false;
     
     if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
-        $hasPhoto = true;
+        $uploadDir = 'uploads/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+        
+        $fileTmpPath = $_FILES['photoFileName']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['photoFileName']['name'], PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $maxFileSize = 5 * 1024 * 1024;
+        
+        if ($_FILES['photoFileName']['size'] > $maxFileSize) {
+            $errorMessage = "❌ Image file is too large! Maximum size is 5MB.";
+            $photoError = true;
+        } elseif (!in_array($fileExtension, $allowedExtensions)) {
+            $errorMessage = "❌ Invalid image format! Allowed: JPG, PNG, GIF, WebP";
+            $photoError = true;
+        } else {
+            $cleanName = cleanFileName($name);
+            $randomDigits = getRandomDigits();
+            $newFileName = $cleanName . '_' . $randomDigits . '.' . $fileExtension;
+            $destPath = $uploadDir . $newFileName;
+            
+            if (move_uploaded_file($fileTmpPath, $destPath)) {
+                if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
+                    unlink($recipe['photoFileName']);
+                }
+                $photoFileName = $destPath;
+            } else {
+                $errorMessage = "❌ Failed to upload image.";
+                $photoError = true;
+            }
+        }
     } 
-    elseif (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
-        $hasPhoto = true;
-    }
-    
-    if (!$hasPhoto) {
-        $errorMessage = "❌ Photo is required! You must have a recipe image. Please upload an image.";
+    elseif (empty($recipe['photoFileName']) || !file_exists($recipe['photoFileName'])) {
+        $errorMessage = "❌ Photo is required! You must have a recipe image.";
         $photoError = true;
     }
     
-    if (!$photoError) {
+    $videoFilePath = $recipe['videoFilePath'];
+    
+    if (!$photoError && empty($errorMessage)) {
+        if ($videoOptionSelected === 'none') {
+            if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
+                unlink($recipe['videoFilePath']);
+            }
+            $videoFilePath = '';
+        } 
         
-        if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
+        
+        
+        
+        
+        
+        
+        elseif ($videoOptionSelected === 'url' && !empty($videoUrlInput)) {
+    if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
+        unlink($recipe['videoFilePath']);
+    }
+    if (strpos($videoUrlInput, '?') !== false) {
+        $videoFilePath = $videoUrlInput . '&recipe_id=' . $recipeID;
+    } else {
+        $videoFilePath = $videoUrlInput . '?recipe_id=' . $recipeID;
+    }
+}
+        
+        elseif ($videoOptionSelected === 'upload' && isset($_FILES['videoFile']) && $_FILES['videoFile']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = 'uploads/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+            $fileTmpPath = $_FILES['videoFile']['tmp_name'];
+            $fileExtension = strtolower(pathinfo($_FILES['videoFile']['name'], PATHINFO_EXTENSION));
+            $allowedVideoExtensions = ['mp4', 'avi', 'mov', 'mpeg', 'webm'];
+            $maxVideoSize = 50 * 1024 * 1024;
             
-            $fileTmpPath = $_FILES['photoFileName']['tmp_name'];
-            $fileExtension = strtolower(pathinfo($_FILES['photoFileName']['name'], PATHINFO_EXTENSION));
-            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            $maxFileSize = 5 * 1024 * 1024;
-            
-            if ($_FILES['photoFileName']['size'] > $maxFileSize) {
-                $errorMessage = "❌ Image file is too large! Maximum size is 5MB.";
-            } elseif (!in_array($fileExtension, $allowedExtensions)) {
-                $errorMessage = "❌ Invalid image format! Allowed: JPG, PNG, GIF, WebP";
+            if ($_FILES['videoFile']['size'] > $maxVideoSize) {
+                $errorMessage = "❌ Video file is too large! Maximum size is 50MB.";
+            } elseif (!in_array($fileExtension, $allowedVideoExtensions)) {
+                $errorMessage = "❌ Invalid video format! Allowed: MP4, AVI, MOV, MPEG, WebM";
             } else {
                 $cleanName = cleanFileName($name);
                 $randomDigits = getRandomDigits();
-                $newFileName = $cleanName . '_' . $randomDigits . '.' . $fileExtension;
+                $newFileName = $cleanName . '_video_' . $randomDigits . '.' . $fileExtension;
                 $destPath = $uploadDir . $newFileName;
                 
                 if (move_uploaded_file($fileTmpPath, $destPath)) {
-                    if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
-                        unlink($recipe['photoFileName']);
+                    if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
+                        unlink($recipe['videoFilePath']);
                     }
-                    $photoFileName = $destPath;
-                } else {
-                    $errorMessage = "❌ Failed to upload image.";
+                    $videoFilePath = $destPath;
                 }
             }
         }
+    }
+    
+    if (empty($errorMessage)) {
+        $updateSql = "UPDATE recipe SET 
+                      name = '" . $conn->real_escape_string($name) . "', 
+                      categoryID = $categoryID, 
+                      description = '" . $conn->real_escape_string($description) . "', 
+                      photoFileName = '" . $conn->real_escape_string($photoFileName) . "', 
+                      videoFilePath = '" . $conn->real_escape_string($videoFilePath) . "' 
+                      WHERE id = $recipeID";
         
-        $videoFilePath = $recipe['videoFilePath'];
-        
-        if (empty($errorMessage)) {
-            if ($videoOptionSelected === 'none') {
-                if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
-                    unlink($recipe['videoFilePath']);
-                }
-                $videoFilePath = '';
-            } 
-            elseif ($videoOptionSelected === 'url' && !empty($videoUrlInput)) {
-                if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
-                    unlink($recipe['videoFilePath']);
-                }
-                $videoFilePath = $videoUrlInput;
-            } 
-            elseif ($videoOptionSelected === 'upload' && isset($_FILES['videoFile']) && $_FILES['videoFile']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = 'uploads/';
-                $fileTmpPath = $_FILES['videoFile']['tmp_name'];
-                $fileExtension = strtolower(pathinfo($_FILES['videoFile']['name'], PATHINFO_EXTENSION));
-                $allowedVideoExtensions = ['mp4', 'avi', 'mov', 'mpeg', 'webm'];
-                $maxVideoSize = 50 * 1024 * 1024;
-                
-                if ($_FILES['videoFile']['size'] > $maxVideoSize) {
-                    $errorMessage = "❌ Video file is too large! Maximum size is 50MB.";
-                } elseif (!in_array($fileExtension, $allowedVideoExtensions)) {
-                    $errorMessage = "❌ Invalid video format! Allowed: MP4, AVI, MOV, MPEG, WebM";
-                } else {
-                    $cleanName = cleanFileName($name);
-                    $randomDigits = getRandomDigits();
-                    $newFileName = $cleanName . '_video_' . $randomDigits . '.' . $fileExtension;
-                    $destPath = $uploadDir . $newFileName;
-                    
-                    if (move_uploaded_file($fileTmpPath, $destPath)) {
-                        if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath']) && strpos($recipe['videoFilePath'], 'http') !== 0) {
-                            unlink($recipe['videoFilePath']);
-                        }
-                        $videoFilePath = $destPath;
-                    }
-                }
-            }
-        }
-        
-        if (empty($errorMessage)) {
-            $updateSql = "UPDATE recipe SET name=?, categoryID=?, description=?, photoFileName=?, videoFilePath=? WHERE id=?";
-            $updateStmt = $conn->prepare($updateSql);
-            $updateStmt->bind_param("sisssi", $name, $categoryID, $description, $photoFileName, $videoFilePath, $recipeID);
+        if ($conn->query($updateSql)) {
             
-            if ($updateStmt->execute()) {
-                
-                $conn->query("DELETE FROM ingredients WHERE recipeID = $recipeID");
-                if (!empty($newIngredients)) {
-                    $stmt = $conn->prepare("INSERT INTO ingredients (recipeID, ingredientName, ingredientQuantity) VALUES (?, ?, ?)");
-                    foreach ($newIngredients as $ing) {
-                        $stmt->bind_param("iss", $recipeID, $ing['name'], $ing['quantity']);
-                        $stmt->execute();
-                    }
-                    $stmt->close();
+            $conn->query("DELETE FROM ingredients WHERE recipeID = $recipeID");
+            if (!empty($newIngredients)) {
+                $stmt = $conn->prepare("INSERT INTO ingredients (recipeID, ingredientName, ingredientQuantity) VALUES (?, ?, ?)");
+                foreach ($newIngredients as $ing) {
+                    $stmt->bind_param("iss", $recipeID, $ing['name'], $ing['quantity']);
+                    $stmt->execute();
                 }
-                
-                $conn->query("DELETE FROM instructions WHERE recipeID = $recipeID");
-                if (!empty($newInstructions)) {
-                    $stmt = $conn->prepare("INSERT INTO instructions (recipeID, step, stepOrder) VALUES (?, ?, ?)");
-                    foreach ($newInstructions as $i => $inst) {
-                        $stepOrder = $i + 1;
-                        $fullStep = !empty($inst['title']) ? $inst['title'] . ': ' . $inst['description'] : $inst['description'];
-                        $stmt->bind_param("isi", $recipeID, $fullStep, $stepOrder);
-                        $stmt->execute();
-                    }
-                    $stmt->close();
-                }
-                
-                $successMessage = "✅ Recipe updated successfully! Redirecting...";
-                
-                echo "<script>
-                        setTimeout(function() {
-                            window.location.href = 'myrecipes.php';
-                        }, 2000);
-                      </script>";
-                
-            } else {
-                $errorMessage = "❌ Database error: " . $conn->error;
+                $stmt->close();
             }
-            $updateStmt->close();
+            
+            $conn->query("DELETE FROM instructions WHERE recipeID = $recipeID");
+            if (!empty($newInstructions)) {
+                $stmt = $conn->prepare("INSERT INTO instructions (recipeID, step, stepOrder) VALUES (?, ?, ?)");
+                foreach ($newInstructions as $i => $inst) {
+                    $stepOrder = $i + 1;
+                    $fullStep = !empty($inst['title']) ? $inst['title'] . ': ' . $inst['description'] : $inst['description'];
+                    $stmt->bind_param("isi", $recipeID, $fullStep, $stepOrder);
+                    $stmt->execute();
+                }
+                $stmt->close();
+            }
+            
+            $successMessage = "✅ Recipe updated successfully! Redirecting...";
+            
+            $recipe['name'] = $name;
+            $recipe['categoryID'] = $categoryID;
+            $recipe['description'] = $description;
+            $recipe['photoFileName'] = $photoFileName;
+            $recipe['videoFilePath'] = $videoFilePath;
+            
+            $ingredients = $newIngredients;
+            
+            $instructions = [];
+            foreach ($newInstructions as $i => $inst) {
+                $instructions[] = [
+                    'step' => (!empty($inst['title']) ? $inst['title'] . ': ' : '') . $inst['description'],
+                    'stepOrder' => $i + 1
+                ];
+            }
+            
+            if (empty($videoFilePath)) {
+                $videoOption = 'none';
+                $videoUrl = '';
+            } elseif (filter_var($videoFilePath, FILTER_VALIDATE_URL)) {
+                $videoOption = 'url';
+                $videoUrl = $videoFilePath;
+            } else {
+                $videoOption = 'upload';
+            }
+            
+            echo "<script>
+                    setTimeout(function() {
+                        window.location.href = 'myrecipes.php';
+                    }, 2000);
+                  </script>";
+            
+        } else {
+            $errorMessage = "❌ Database error: " . $conn->error;
         }
     }
 }
@@ -590,6 +622,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
 
       <form class="recipe-form" id="recipeForm" method="POST" enctype="multipart/form-data" style="<?php echo $successMessage ? 'display: none;' : 'display: block;'; ?>">
         <input type="hidden" name="updateRecipe" value="1">
+        <input type="hidden" name="recipeID" value="<?php echo $recipeID; ?>">
         
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-info-circle"></i> Recipe Information</h2>
@@ -642,7 +675,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
               <p>Click to upload image</p>
               <span>Max size: 5MB (JPG, PNG, GIF, WebP)</span>
             </div>
-            <input type="file" id="recipeImage" name="photoFileName" accept="image/*" style="display: none;" required>
+            <input type="file" id="recipeImage" name="photoFileName" accept="image/*" style="display: none;">
             <div id="file-name"></div>
           </div>
           <p id="photoErrorMsg" style="color: red; margin-top: 10px; display: none;">⚠️ Photo is required!</p>
