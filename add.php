@@ -34,6 +34,20 @@ function cleanFileName($name) {
     return $clean;
 }
 
+function getUploadPath($type) {
+    if ($type === 'image') {
+        $dir = 'uploads/images/';
+    } elseif ($type === 'video') {
+        $dir = 'uploads/videos/';
+    } else {
+        $dir = 'uploads/';
+    }
+    if (!is_dir($dir)) {
+        mkdir($dir, 0777, true);
+    }
+    return $dir;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     
     if (!isset($_FILES['photoFileName']) || $_FILES['photoFileName']['error'] === UPLOAD_ERR_NO_FILE) {
@@ -47,18 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
         $photoFileName = "";
         $videoFilePath = "";
         $photoError = false;
-        $videoError = false;
         
         if ($_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = 'uploads/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
+            $uploadDir = getUploadPath('image');
             $fileTmpPath = $_FILES['photoFileName']['tmp_name'];
             $originalName = $_FILES['photoFileName']['name'];
             $fileExtension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
             $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            $maxFileSize = 5 * 1024 * 1024; // 5MB
+            $maxFileSize = 5 * 1024 * 1024;
             
             if ($_FILES['photoFileName']['size'] > $maxFileSize) {
                 $errorMessage = "❌ Image file is too large! Maximum size is 5MB.";
@@ -87,23 +97,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
             
             if (isset($_POST['videoOption'])) {
                 if ($_POST['videoOption'] === 'url' && !empty($_POST['videoUrl'])) {
-                    $videoFilePath = $conn->real_escape_string($_POST['videoUrl']);
+                    $originalVideoUrl = $_POST['videoUrl'];
+                    if (strpos($originalVideoUrl, '?') !== false) {
+                        $videoFilePath = $originalVideoUrl . '&temp_id=' . time();
+                    } else {
+                        $videoFilePath = $originalVideoUrl . '?temp_id=' . time();
+                    }
                 } 
                 elseif ($_POST['videoOption'] === 'upload' && isset($_FILES['videoFile']) && $_FILES['videoFile']['error'] === UPLOAD_ERR_OK) {
-                    $uploadDir = 'uploads/';
+                    $uploadDir = getUploadPath('video');
                     $fileTmpPath = $_FILES['videoFile']['tmp_name'];
                     $originalName = $_FILES['videoFile']['name'];
                     $fileExtension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
                     $allowedVideoExtensions = ['mp4', 'avi', 'mov', 'mpeg', 'webm'];
-                    $maxVideoSize = 50 * 1024 * 1024; // 50MB
+                    $maxVideoSize = 50 * 1024 * 1024;
                     
                     if ($_FILES['videoFile']['size'] > $maxVideoSize) {
                         $errorMessage = "❌ Video file is too large! Maximum size is 50MB.";
-                        $videoError = true;
                     }
                     elseif (!in_array($fileExtension, $allowedVideoExtensions)) {
                         $errorMessage = "❌ Invalid video format! Please use MP4, AVI, MOV, MPEG, or WebM.";
-                        $videoError = true;
                     }
                     else {
                         $cleanName = cleanFileName($name);
@@ -115,20 +128,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                             $videoFilePath = $destPath;
                         } else {
                             $errorMessage = "❌ Failed to upload video. Please try again!";
-                            $videoError = true;
                         }
                     }
                 }
             }
         }
         
-        if (!$photoError && !$videoError && empty($errorMessage)) {
+        if (!$photoError && empty($errorMessage)) {
             
             $insertRecipeQuery = "INSERT INTO recipe (userID, categoryID, name, description, photoFileName, videoFilePath) 
                                   VALUES ($userID, $categoryID, '$name', '$description', '$photoFileName', '$videoFilePath')";
             
             if ($conn->query($insertRecipeQuery) === TRUE) {
                 $recipeID = $conn->insert_id;
+                
+                if (isset($_POST['videoOption']) && $_POST['videoOption'] === 'url' && !empty($_POST['videoUrl'])) {
+                    $originalVideoUrl = $_POST['videoUrl'];
+                    if (strpos($originalVideoUrl, '?') !== false) {
+                        $finalVideoUrl = $originalVideoUrl . '&recipe_id=' . $recipeID;
+                    } else {
+                        $finalVideoUrl = $originalVideoUrl . '?recipe_id=' . $recipeID;
+                    }
+                    $conn->query("UPDATE recipe SET videoFilePath = '$finalVideoUrl' WHERE id = $recipeID");
+                }
                 
                 if (!empty($_POST['ingredientName'])) {
                     $stmt = $conn->prepare("INSERT INTO ingredients (recipeID, ingredientName, ingredientQuantity) VALUES (?, ?, ?)");
