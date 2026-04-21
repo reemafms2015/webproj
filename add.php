@@ -10,6 +10,13 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+
+
+
+
+//_____ Retrieve categories from database___________-
+
+
 $categoriesQuery = "SELECT id, categoryname FROM recipecategory ORDER BY id";
 $categoriesResult = $conn->query($categoriesQuery);
 $categories = [];
@@ -18,6 +25,12 @@ if ($categoriesResult->num_rows > 0) {
         $categories[] = $row;
     }
 }
+
+
+
+
+
+
 
 $userID = $_SESSION['userID'] ?? 2;
 
@@ -48,6 +61,14 @@ function getUploadPath($type) {
     return $dir;
 }
 
+
+
+
+
+
+
+// ___________When form is submitted__________________--
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     
     if (!isset($_FILES['photoFileName']) || $_FILES['photoFileName']['error'] === UPLOAD_ERR_NO_FILE) {
@@ -62,6 +83,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
         $videoFilePath = "";
         $photoError = false;
         
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        //____________________ Upload recipe image____________________
+        
         if ($_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = getUploadPath('image');
             $fileTmpPath = $_FILES['photoFileName']['tmp_name'];
@@ -69,6 +102,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
             $fileExtension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
             $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             $maxFileSize = 5 * 1024 * 1024;
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            //______________________ Validate image size and format________________
             
             if ($_FILES['photoFileName']['size'] > $maxFileSize) {
                 $errorMessage = "❌ Image file is too large! Maximum size is 5MB.";
@@ -96,6 +141,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
         if (!$photoError && empty($errorMessage)) {
             
             if (isset($_POST['videoOption'])) {
+                
+                
+                
+                
+                
+                
+                
+                
+                //_____________ Save video URL if provided____________________
+                
+                
                 if ($_POST['videoOption'] === 'url' && !empty($_POST['videoUrl'])) {
                     $originalVideoUrl = $_POST['videoUrl'];
                     if (strpos($originalVideoUrl, '?') !== false) {
@@ -104,6 +160,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                         $videoFilePath = $originalVideoUrl . '?temp_id=' . time();
                     }
                 } 
+                
+                
+                
+                
+                
+                
+                
+                
+                // ____________________Upload video file if selected________________
+                
                 elseif ($_POST['videoOption'] === 'upload' && isset($_FILES['videoFile']) && $_FILES['videoFile']['error'] === UPLOAD_ERR_OK) {
                     $uploadDir = getUploadPath('video');
                     $fileTmpPath = $_FILES['videoFile']['tmp_name'];
@@ -136,6 +202,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
         
         if (!$photoError && empty($errorMessage)) {
             
+            
+            
+            
+            
+            
+            
+            //_______________- Insert new recipe into database_______________-
+            
             $insertRecipeQuery = "INSERT INTO recipe (userID, categoryID, name, description, photoFileName, videoFilePath) 
                                   VALUES ($userID, $categoryID, '$name', '$description', '$photoFileName', '$videoFilePath')";
             
@@ -153,6 +227,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                 }
                 
                 if (!empty($_POST['ingredientName'])) {
+                    
+                    
+                    
+                    
+                    
+                    
+                    // ________________Insert ingredients for the recipe___________________
+                    
                     $stmt = $conn->prepare("INSERT INTO ingredients (recipeID, ingredientName, ingredientQuantity) VALUES (?, ?, ?)");
                     
                     foreach ($_POST['ingredientName'] as $i => $ingredientName) {
@@ -166,6 +248,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                 }
                 
                 if (!empty($_POST['stepDescription'])) {
+                    
+                    
+                    
+                    
+                    
+                    
+                    //_____________ Insert instructions (steps) for the recipe_________
+                    
+                    
                     $stmt = $conn->prepare("INSERT INTO instructions (recipeID, step, stepOrder) VALUES (?, ?, ?)");
                     
                     foreach ($_POST['stepDescription'] as $i => $stepDescription) {
@@ -184,6 +275,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                 
                 echo "<script>
                         setTimeout(function() {
+                        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            // ______________________Redirect to my recipes page after adding_________________
+
                             window.location.href = 'myrecipes.php';
                         }, 2000);
                       </script>";
@@ -834,6 +942,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
 
           <div class="form-group">
             <label for="categoryID">Recipe Category <span class="required">*</span></label>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <!-- ***********Display categories in dropdown menu******************8-->
+            
+            
             <select id="categoryID" name="categoryID" required>
               <option value="">Select a category</option>
               <?php foreach ($categories as $category): ?>
