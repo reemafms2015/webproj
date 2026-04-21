@@ -151,6 +151,6 @@ $_SESSION["userID"] = $newUserId;
 $_SESSION["userType"] = $userType;
 
 // Redirect to user page
-header("Location: user.php");
+header("Location: user.php?success=Account created successfully");
 exit();
 ?>
