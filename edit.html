@@ -11,14 +11,12 @@ if ($conn->connect_error) {
 $errorMessage = "";
 $successMessage = "";
 
-// جلب ID الوصفة من الرابط
 $recipeID = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($recipeID <= 0) {
     die("Invalid recipe ID");
 }
 
-// جلب بيانات الوصفة
 $recipeSql = "SELECT * FROM recipe WHERE id = ?";
 $recipeStmt = $conn->prepare($recipeSql);
 $recipeStmt->bind_param("i", $recipeID);
@@ -31,21 +29,18 @@ if ($recipeResult->num_rows === 0) {
 $recipe = $recipeResult->fetch_assoc();
 $recipeStmt->close();
 
-// جلب الفئات
 $categories = [];
 $catResult = $conn->query("SELECT id, categoryname FROM recipecategory ORDER BY id");
 while ($row = $catResult->fetch_assoc()) {
     $categories[] = $row;
 }
 
-// جلب المكونات
 $ingredients = [];
 $ingResult = $conn->query("SELECT * FROM ingredients WHERE recipeID = $recipeID");
 while ($row = $ingResult->fetch_assoc()) {
     $ingredients[] = $row;
 }
 
-// جلب التعليمات
 $instructions = [];
 $instResult = $conn->query("SELECT * FROM instructions WHERE recipeID = $recipeID ORDER BY stepOrder");
 while ($row = $instResult->fetch_assoc()) {
@@ -61,7 +56,6 @@ function cleanFileName($name) {
     return substr($clean, 0, 20);
 }
 
-// تحديد خيار الفيديو الحالي
 $videoOption = 'none';
 $videoUrl = '';
 if (!empty($recipe['videoFilePath'])) {
@@ -73,7 +67,6 @@ if (!empty($recipe['videoFilePath'])) {
     }
 }
 
-// ========== معالجة التعديل فقط عند الضغط على زر Update ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
     
     $name = trim($_POST['name']);
@@ -82,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
     $videoOptionSelected = $_POST['videoOption'] ?? 'none';
     $videoUrlInput = $_POST['videoUrl'] ?? '';
     
-    // تجميع المكونات الجديدة
     $newIngredients = [];
     if (!empty($_POST['ingredientName'])) {
         foreach ($_POST['ingredientName'] as $i => $ingName) {
@@ -95,7 +87,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
         }
     }
     
-    // تجميع التعليمات الجديدة
     $newInstructions = [];
     if (!empty($_POST['stepDescription'])) {
         foreach ($_POST['stepDescription'] as $i => $stepDesc) {
@@ -108,30 +99,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
         }
     }
     
-    // ========== التحقق من وجود صورة (الجزء المهم) ==========
     $photoFileName = $recipe['photoFileName'];
     $hasPhoto = false;
     $photoError = false;
     
-    // هل رفع صورة جديدة؟
     if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
         $hasPhoto = true;
     } 
-    // هل عنده صورة قديمة؟
     elseif (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
         $hasPhoto = true;
     }
     
-    // إذا ما في صورة نهائياً -> ارفض
     if (!$hasPhoto) {
         $errorMessage = "❌ Photo is required! You must have a recipe image. Please upload an image.";
         $photoError = true;
     }
     
-    // إذا في صورة، تابع المعالجة
     if (!$photoError) {
         
-        // معالجة الصورة الجديدة (فقط إذا رفع صورة جديدة)
         if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = 'uploads/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
@@ -152,7 +137,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
                 $destPath = $uploadDir . $newFileName;
                 
                 if (move_uploaded_file($fileTmpPath, $destPath)) {
-                    // حذف الصورة القديمة
                     if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
                         unlink($recipe['photoFileName']);
                     }
@@ -163,7 +147,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
             }
         }
         
-        // معالجة الفيديو
         $videoFilePath = $recipe['videoFilePath'];
         
         if (empty($errorMessage)) {
@@ -206,7 +189,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
             }
         }
         
-        // تحديث قاعدة البيانات
         if (empty($errorMessage)) {
             $updateSql = "UPDATE recipe SET name=?, categoryID=?, description=?, photoFileName=?, videoFilePath=? WHERE id=?";
             $updateStmt = $conn->prepare($updateSql);
@@ -214,7 +196,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
             
             if ($updateStmt->execute()) {
                 
-                // تحديث المكونات
                 $conn->query("DELETE FROM ingredients WHERE recipeID = $recipeID");
                 if (!empty($newIngredients)) {
                     $stmt = $conn->prepare("INSERT INTO ingredients (recipeID, ingredientName, ingredientQuantity) VALUES (?, ?, ?)");
@@ -225,7 +206,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
                     $stmt->close();
                 }
                 
-                // تحديث التعليمات
                 $conn->query("DELETE FROM instructions WHERE recipeID = $recipeID");
                 if (!empty($newInstructions)) {
                     $stmt = $conn->prepare("INSERT INTO instructions (recipeID, step, stepOrder) VALUES (?, ?, ?)");
