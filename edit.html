@@ -2,7 +2,6 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// الاتصال بقاعدة البيانات
 $conn = new mysqli("localhost", "root", "root", "recipedb", 8889);
 
 if ($conn->connect_error) {
@@ -33,13 +32,10 @@ $recipe = $recipeResult->fetch_assoc();
 $recipeStmt->close();
 
 // جلب الفئات
-$categoriesQuery = "SELECT id, categoryname FROM recipecategory ORDER BY id";
-$categoriesResult = $conn->query($categoriesQuery);
 $categories = [];
-if ($categoriesResult->num_rows > 0) {
-    while($row = $categoriesResult->fetch_assoc()) {
-        $categories[] = $row;
-    }
+$catResult = $conn->query("SELECT id, categoryname FROM recipecategory ORDER BY id");
+while ($row = $catResult->fetch_assoc()) {
+    $categories[] = $row;
 }
 
 // جلب المكونات
@@ -56,16 +52,13 @@ while ($row = $instResult->fetch_assoc()) {
     $instructions[] = $row;
 }
 
-// دالة لتوليد 4 أرقام عشوائية
 function getRandomDigits() {
     return rand(1000, 9999);
 }
 
-// دالة لتنظيف اسم الملف
 function cleanFileName($name) {
     $clean = preg_replace('/[^a-zA-Z0-9]/', '_', $name);
-    $clean = substr($clean, 0, 20);
-    return $clean;
+    return substr($clean, 0, 20);
 }
 
 // تحديد خيار الفيديو الحالي
@@ -80,7 +73,7 @@ if (!empty($recipe['videoFilePath'])) {
     }
 }
 
-// معالجة التعديل
+// ========== معالجة التعديل فقط عند الضغط على زر Update ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
     
     $name = trim($_POST['name']);
@@ -95,8 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
         foreach ($_POST['ingredientName'] as $i => $ingName) {
             if (!empty($ingName) && !empty($_POST['ingredientQuantity'][$i])) {
                 $newIngredients[] = [
-                    'name' => $ingName,
-                    'quantity' => $_POST['ingredientQuantity'][$i]
+                    'name' => $conn->real_escape_string($ingName),
+                    'quantity' => $conn->real_escape_string($_POST['ingredientQuantity'][$i])
                 ];
             }
         }
@@ -108,65 +101,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
         foreach ($_POST['stepDescription'] as $i => $stepDesc) {
             if (!empty($stepDesc)) {
                 $newInstructions[] = [
-                    'title' => !empty($_POST['stepTitle'][$i]) ? $_POST['stepTitle'][$i] : '',
-                    'description' => $stepDesc
+                    'title' => !empty($_POST['stepTitle'][$i]) ? $conn->real_escape_string($_POST['stepTitle'][$i]) : '',
+                    'description' => $conn->real_escape_string($stepDesc)
                 ];
             }
         }
     }
     
-    // 1. التحقق من وجود صورة
-    $hasPhoto = false;
+    // ========== التحقق من وجود صورة (الجزء المهم) ==========
     $photoFileName = $recipe['photoFileName'];
+    $hasPhoto = false;
+    $photoError = false;
     
+    // هل رفع صورة جديدة؟
     if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
         $hasPhoto = true;
-    } elseif (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
+    } 
+    // هل عنده صورة قديمة؟
+    elseif (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
         $hasPhoto = true;
     }
     
+    // إذا ما في صورة نهائياً -> ارفض
     if (!$hasPhoto) {
-        $errorMessage = "❌ Photo is required! Please upload a recipe image.";
-    }
-    // 2. التحقق من وجود تغييرات
-    elseif ($name === $recipe['name'] && 
-            $categoryID == $recipe['categoryID'] && 
-            $description === $recipe['description'] &&
-            count($newIngredients) == count($ingredients) &&
-            count($newInstructions) == count($instructions) &&
-            $videoOptionSelected === $videoOption) {
-        
-        // التحقق من المكونات
-        $ingredientsSame = true;
-        for ($i = 0; $i < count($ingredients); $i++) {
-            if (!isset($newIngredients[$i]) ||
-                $ingredients[$i]['ingredientName'] !== $newIngredients[$i]['name'] ||
-                $ingredients[$i]['ingredientQuantity'] !== $newIngredients[$i]['quantity']) {
-                $ingredientsSame = false;
-                break;
-            }
-        }
-        
-        // التحقق من التعليمات
-        $instructionsSame = true;
-        for ($i = 0; $i < count($instructions); $i++) {
-            $oldStep = $instructions[$i]['step'];
-            $newStep = ($newInstructions[$i]['title'] ? $newInstructions[$i]['title'] . ': ' : '') . $newInstructions[$i]['description'];
-            if ($oldStep !== $newStep) {
-                $instructionsSame = false;
-                break;
-            }
-        }
-        
-        if ($ingredientsSame && $instructionsSame) {
-            $errorMessage = "⚠️ No changes were made to the recipe! Please modify something first.";
-        }
+        $errorMessage = "❌ Photo is required! You must have a recipe image. Please upload an image.";
+        $photoError = true;
     }
     
-    // إذا ما في خطأ، نحدث قاعدة البيانات
-    if (empty($errorMessage)) {
+    // إذا في صورة، تابع المعالجة
+    if (!$photoError) {
         
-        // معالجة الصورة الجديدة
+        // معالجة الصورة الجديدة (فقط إذا رفع صورة جديدة)
         if (isset($_FILES['photoFileName']) && $_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = 'uploads/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
@@ -187,6 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
                 $destPath = $uploadDir . $newFileName;
                 
                 if (move_uploaded_file($fileTmpPath, $destPath)) {
+                    // حذف الصورة القديمة
                     if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
                         unlink($recipe['photoFileName']);
                     }
@@ -242,9 +208,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
         
         // تحديث قاعدة البيانات
         if (empty($errorMessage)) {
-            $updateSql = "UPDATE recipe SET name='$name', categoryID=$categoryID, description='$description', photoFileName='$photoFileName', videoFilePath='$videoFilePath' WHERE id=$recipeID";
+            $updateSql = "UPDATE recipe SET name=?, categoryID=?, description=?, photoFileName=?, videoFilePath=? WHERE id=?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("sisssi", $name, $categoryID, $description, $photoFileName, $videoFilePath, $recipeID);
             
-            if ($conn->query($updateSql)) {
+            if ($updateStmt->execute()) {
                 
                 // تحديث المكونات
                 $conn->query("DELETE FROM ingredients WHERE recipeID = $recipeID");
@@ -274,13 +242,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
                 
                 echo "<script>
                         setTimeout(function() {
-                            window.location.href = 'my-recipes.php';
+                            window.location.href = 'myrecipes.php';
                         }, 2000);
                       </script>";
                 
             } else {
                 $errorMessage = "❌ Database error: " . $conn->error;
             }
+            $updateStmt->close();
         }
     }
 }
@@ -308,30 +277,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       --transition: all 0.3s ease;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
-      height: 100%;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
 
     body {
-      margin: 0;
-      padding: 0;
       font-family: 'Nunito', sans-serif;
       background: linear-gradient(135deg, var(--secondary), var(--lavender));
       color: var(--dark);
       line-height: 1.6;
     }
 
-    .container {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    .container { min-height: 100vh; display: flex; flex-direction: column; }
 
     header {
       background: linear-gradient(to right, var(--primary), var(--lavender));
@@ -339,26 +295,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 0;
     }
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .logo {
-      width: 130px;
-      height: auto;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
-    }
-
-    header h1 {
-      font-family: 'Comic Neue', cursive;
-      font-size: 2.4rem;
-      color: white;
-    }
+    .header-left { display: flex; align-items: center; gap: 15px; }
+    .logo { width: 130px; height: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15)); }
+    header h1 { font-family: 'Comic Neue', cursive; font-size: 2.4rem; color: white; }
 
     nav a {
       margin-left: 25px;
@@ -367,17 +308,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       font-weight: 700;
       cursor: pointer;
       padding-bottom: 5px;
-      position: relative;
     }
-
-    nav a:hover {
-      color: var(--yellow);
-    }
-
-    nav a.active {
-      color: var(--yellow);
-      border-bottom: 3px solid var(--yellow);
-    }
+    nav a:hover { color: var(--yellow); }
 
     .main-wrapper {
       flex: 1;
@@ -424,56 +356,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
 
     .success-message {
       background-color: rgba(181, 234, 215, 0.3);
-      color: var(--dark);
       padding: 25px;
       border-radius: 14px;
       margin-bottom: 30px;
       display: flex;
       align-items: center;
       border: 3px solid var(--mint);
-      animation: slideIn 0.5s ease-out;
     }
 
     .error-message {
       background-color: rgba(255, 154, 162, 0.2);
-      color: var(--dark);
       padding: 25px;
       border-radius: 14px;
       margin-bottom: 30px;
       display: flex;
       align-items: center;
       border: 3px solid var(--primary);
-      animation: slideIn 0.5s ease-out;
     }
 
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
+    .success-message i, .error-message i { margin-right: 15px; font-size: 2rem; }
+    .success-message i { color: var(--mint); }
+    .error-message i { color: var(--primary); }
 
-    .success-message i, .error-message i {
-      margin-right: 15px;
-      font-size: 2rem;
-    }
-
-    .success-message i {
-      color: var(--mint);
-    }
-
-    .error-message i {
-      color: var(--primary);
-    }
-
-    .success-message span, .error-message span {
-      font-family: 'Comic Neue', cursive;
-      font-size: 1.3rem;
-      font-weight: 700;
-    }
-
-    .recipe-form {
-      padding: 40px;
-      background-color: #FFF9F5;
-    }
+    .recipe-form { padding: 40px; background-color: #FFF9F5; }
 
     .form-section {
       margin-bottom: 35px;
@@ -487,7 +392,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
 
     .form-section:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
       border-left-color: var(--primary);
     }
 
@@ -513,82 +417,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       justify-content: center;
     }
 
-    .form-group {
-      margin-bottom: 20px;
-    }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-weight: 600; }
+    .required { color: var(--primary); }
 
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: var(--dark);
-      font-size: 1.05rem;
-    }
-
-    .required {
-      color: var(--primary);
-    }
-
-    input[type="text"],
-    input[type="url"],
-    textarea,
-    select {
+    input[type="text"], input[type="url"], textarea, select {
       width: 100%;
       padding: 15px 18px;
       border: 2px solid var(--secondary);
       border-radius: 10px;
       font-size: 1rem;
       font-family: 'Nunito', sans-serif;
-      transition: var(--transition);
       background-color: #FFFEFC;
     }
 
-    input[type="text"]:focus,
-    input[type="url"]:focus,
-    textarea:focus,
-    select:focus {
+    input:focus, textarea:focus, select:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(255, 154, 162, 0.2);
       outline: none;
     }
 
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
+    textarea { min-height: 120px; resize: vertical; }
 
-    select {
-      appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235D576B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-      background-repeat: no-repeat;
-      background-position: right 18px center;
-      background-size: 16px;
-      padding-right: 50px;
-    }
-
-    .ingredient-row,
-    .step-row {
+    .ingredient-row, .step-row {
       display: flex;
       gap: 15px;
       margin-bottom: 15px;
       align-items: flex-start;
     }
 
-    .ingredient-name,
-    .step-number {
-      flex: 2;
-    }
+    .ingredient-name, .step-number { flex: 2; }
+    .ingredient-amount { flex: 1; }
+    .step-content { flex: 3; }
 
-    .ingredient-amount {
-      flex: 1;
-    }
-
-    .step-content {
-      flex: 3;
-    }
-
-    .add-btn,
-    .remove-btn {
+    .add-btn, .remove-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -606,26 +467,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       background-color: var(--mint);
       color: var(--dark);
       margin-top: 10px;
-      box-shadow: 0 4px 0 #8FD5B7;
     }
-
-    .add-btn:hover {
-      background-color: #9CDBC4;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 0 #8FD5B7;
-    }
+    .add-btn:hover { background-color: #9CDBC4; transform: translateY(-3px); }
 
     .remove-btn {
       background-color: var(--primary);
       color: white;
       padding: 10px 18px;
-      box-shadow: 0 4px 0 #E88A92;
     }
-
-    .remove-btn:hover {
-      background-color: #FF8A94;
-      transform: translateY(-2px);
-    }
+    .remove-btn:hover { background-color: #FF8A94; }
 
     .step-controls {
       display: flex;
@@ -644,62 +494,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       transition: var(--transition);
       background-color: #FFFCF9;
     }
+    .upload-area:hover { border-color: var(--primary); background-color: rgba(255, 154, 162, 0.05); }
+    .upload-area i { font-size: 3rem; color: var(--primary); margin-bottom: 15px; }
 
-    .upload-area.required-missing {
-      border-color: var(--primary);
-      background-color: rgba(255, 154, 162, 0.2);
-      animation: shake 0.5s ease-in-out;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-10px); }
-      75% { transform: translateX(10px); }
-    }
-
-    .upload-area:hover {
-      border-color: var(--primary);
-      background-color: rgba(255, 154, 162, 0.05);
-      transform: translateY(-5px);
-    }
-
-    .upload-area.dragover {
-      border-color: var(--mint);
-      background-color: rgba(181, 234, 215, 0.1);
-    }
-
-    .upload-area i {
-      font-size: 3rem;
-      color: var(--primary);
-      margin-bottom: 15px;
-    }
-
-    .upload-area p {
-      color: var(--dark);
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-
-    .upload-area span {
-      font-size: 0.9rem;
-      color: #888;
-    }
-
-    #file-name {
-      margin-top: 15px;
-      font-size: 0.95rem;
-      color: var(--dark);
-      padding: 10px 18px;
-      background-color: rgba(181, 234, 215, 0.2);
-      border-radius: 8px;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    #file-name i {
-      margin-right: 10px;
-      color: var(--mint);
-    }
+    .current-image { margin-top: 15px; text-align: center; }
+    .current-image img { max-width: 200px; border-radius: 12px; border: 3px solid var(--secondary); }
 
     .video-options {
       display: grid;
@@ -708,17 +507,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       margin-bottom: 20px;
     }
 
-    .video-option {
-      position: relative;
-    }
-
-    .video-option input[type="radio"] {
-      position: absolute;
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
+    .video-option { position: relative; }
+    .video-option input[type="radio"] { position: absolute; opacity: 0; }
     .video-option label {
       display: block;
       padding: 18px;
@@ -726,37 +516,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       border-radius: 12px;
       text-align: center;
       cursor: pointer;
-      transition: var(--transition);
       border: 2px solid var(--secondary);
       font-weight: 500;
     }
-
     .video-option input[type="radio"]:checked + label {
       border-color: var(--primary);
       background-color: rgba(255, 154, 162, 0.1);
       color: var(--primary);
-      box-shadow: 0 4px 0 var(--primary);
     }
 
-    .video-option label:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    }
-
-    .video-input {
-      display: none;
-      margin-top: 20px;
-      animation: slideDown 0.4s ease-out;
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .video-input.active {
-      display: block;
-    }
+    .video-input { display: none; margin-top: 20px; }
+    .video-input.active { display: block; }
 
     .form-actions {
       display: flex;
@@ -767,19 +537,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       border-top: 3px dashed var(--secondary);
     }
 
-    .submit-btn,
-    .reset-btn,
-    .cancel-btn {
+    .submit-btn, .cancel-btn {
       padding: 18px 40px;
       font-size: 1.2rem;
       border: none;
       border-radius: 50px;
       cursor: pointer;
       font-weight: 700;
-      transition: var(--transition);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
       min-width: 180px;
       font-family: 'Comic Neue', cursive;
     }
@@ -787,168 +551,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
     .submit-btn {
       background: linear-gradient(to right, var(--primary), var(--lavender));
       color: white;
-      box-shadow: 0 6px 0 var(--dark);
     }
-
-    .submit-btn:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 0 var(--dark);
-    }
-
-    .reset-btn {
-      background-color: var(--yellow);
-      color: var(--dark);
-      border: 3px solid var(--secondary);
-      box-shadow: 0 6px 0 var(--secondary);
-    }
-
-    .reset-btn:hover {
-      background-color: #FFDFB0;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 0 var(--secondary);
-    }
+    .submit-btn:hover { transform: translateY(-5px); }
 
     .cancel-btn {
       background-color: #E0E0E0;
       color: var(--dark);
-      border: 3px solid #CCCCCC;
-      box-shadow: 0 6px 0 #CCCCCC;
     }
 
-    .cancel-btn:hover {
-      background-color: #D6D6D6;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 0 #CCCCCC;
-    }
-
-    .counter {
-      font-size: 0.85rem;
-      color: #888;
-      text-align: right;
-      margin-top: 8px;
-    }
-
-    .current-image {
-      margin-top: 15px;
-      text-align: center;
-    }
-
-    .current-image img {
-      max-width: 200px;
-      border-radius: 12px;
-      border: 3px solid var(--secondary);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .image-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      justify-content: center;
-    }
-
-    .change-image-btn,
-    .remove-image-btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: var(--transition);
-      font-size: 0.9rem;
-    }
-
-    .change-image-btn {
-      background-color: var(--lavender);
-      color: var(--dark);
-    }
-
-    .remove-image-btn {
-      background-color: var(--primary);
-      color: white;
-    }
-
-    .likes-section {
-      margin-top: 20px;
-      padding: 15px;
-      background: #FFF9F5;
-      border-radius: 10px;
-      text-align: center;
-      border: 2px solid var(--secondary);
-    }
-
-    .likes-label {
-      font-weight: 600;
-      color: var(--dark);
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .likes-input {
-      padding: 12px 18px;
-      border: 2px solid var(--secondary);
-      border-radius: 10px;
-      font-size: 1rem;
-      width: 150px;
-      text-align: center;
-      font-weight: 700;
-      color: var(--primary);
-    }
-
-    footer {
-      background: var(--mint);
-      padding: 25px;
-      text-align: center;
-      font-weight: 600;
-    }
+    .counter { font-size: 0.85rem; color: #888; text-align: right; margin-top: 8px; }
+    footer { background: var(--mint); padding: 25px; text-align: center; font-weight: 600; }
 
     @media (max-width: 768px) {
-      header {
-        flex-direction: column;
-        gap: 15px;
-      }
-
-      .logo {
-        width: 110px;
-      }
-
-      .ingredient-row,
-      .step-row {
-        flex-direction: column;
-        gap: 15px;
-      }
-
-      .step-controls {
-        width: 100%;
-        justify-content: flex-start;
-        padding-top: 0;
-      }
-
-      .form-actions {
-        flex-direction: column;
-      }
-
-      .page-header h2 {
-        font-size: 2.2rem;
-      }
-
-      .page-header p {
-        font-size: 1.1rem;
-        padding: 12px 20px;
-      }
+      header { flex-direction: column; gap: 15px; }
+      .ingredient-row, .step-row { flex-direction: column; }
+      .step-controls { width: 100%; justify-content: flex-start; padding-top: 0; }
+      .form-actions { flex-direction: column; }
+      .page-header h2 { font-size: 2.2rem; }
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-
   <header>
     <div class="header-left">
       <img src="photo.png" alt="Kids Recipes Logo" class="logo">
       <h1>LittleChefs</h1>
     </div>
-
     <nav>
       <a href="index.php">Home</a>
       <a href="#">Users</a>
@@ -957,7 +587,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
   </header>
 
   <div class="main-wrapper">
-
     <div class="page-header">
       <h2><i class="fas fa-edit"></i> Edit Recipe</h2>
       <p>Update your recipe details and make it even better! ✨</p>
@@ -982,7 +611,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       <form class="recipe-form" id="recipeForm" method="POST" enctype="multipart/form-data" style="<?php echo $successMessage ? 'display: none;' : 'display: block;'; ?>">
         <input type="hidden" name="updateRecipe" value="1">
         
-        <!-- Section 1: Basic Information -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-info-circle"></i> Recipe Information</h2>
 
@@ -1011,17 +639,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
           </div>
         </div>
 
-        <!-- Section 2: Recipe Image -->
+        <!-- Section 2: Recipe Image (REQUIRED) -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-camera"></i> Recipe Picture <span class="required">*</span></h2>
 
           <?php if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])): ?>
           <div class="current-image" id="currentImage">
             <p><strong>Current Image:</strong></p>
-            <img src="<?php echo htmlspecialchars($recipe['photoFileName']); ?>" alt="<?php echo htmlspecialchars($recipe['name']); ?>">
-            <p><small><i><?php echo htmlspecialchars($recipe['name']); ?></i> 👩‍🍳</small></p>
-            <div class="image-actions">
-              <button type="button" class="change-image-btn" id="changeImageBtn">
+            <img src="<?php echo htmlspecialchars($recipe['photoFileName']); ?>" alt="Current recipe image">
+            <div class="image-actions" style="margin-top: 10px;">
+              <button type="button" class="change-image-btn" id="changeImageBtn" style="background-color: var(--lavender); color: var(--dark); padding: 8px 16px; border-radius: 8px; cursor: pointer;">
                 <i class="fas fa-exchange-alt"></i> Change Image
               </button>
             </div>
@@ -1029,18 +656,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
           <?php endif; ?>
 
           <div class="form-group" id="uploadSection" style="<?php echo (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) ? 'display: none;' : 'display: block; margin-top: 20px;'; ?>">
-            <label>Upload New Recipe Image</label>
+            <label>Upload Recipe Image <span class="required">*</span></label>
             <div class="upload-area" id="uploadArea">
               <i class="fas fa-cloud-upload-alt"></i>
-              <p>Drag & drop or click to upload new image</p>
+              <p>Click to upload image</p>
               <span>Max size: 5MB (JPG, PNG, GIF, WebP)</span>
             </div>
-            <input type="file" id="recipeImage" name="photoFileName" accept="image/*" style="display: none;">
+            <input type="file" id="recipeImage" name="photoFileName" accept="image/*" style="display: none;" required>
             <div id="file-name"></div>
           </div>
+          <p id="photoErrorMsg" style="color: red; margin-top: 10px; display: none;">⚠️ Photo is required!</p>
         </div>
 
-        <!-- Section 3: Ingredients -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-list-ul"></i> Ingredients</h2>
 
@@ -1082,7 +709,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
           </button>
         </div>
 
-        <!-- Section 4: Preparation Steps -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-list-ol"></i> Instructions</h2>
 
@@ -1096,11 +722,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
               <div class="form-group step-content">
                 <label>Step Description <span class="required">*</span></label>
                 <textarea name="stepDescription[]" placeholder="Write step in a fun way for kids! 🎯" rows="2" required></textarea>
-              </div>
-              <div class="step-controls">
-                <button type="button" class="remove-btn remove-step" style="display: none;">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
               </div>
             </div>
             <?php else: ?>
@@ -1137,7 +758,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
           </button>
         </div>
 
-        <!-- Section 5: Video (Optional) -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-video"></i> Recipe Video (Optional)</h2>
 
@@ -1172,9 +792,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
           </div>
         </div>
 
-        <!-- Form Actions -->
         <div class="form-actions">
-          <button type="submit" name="updateRecipe" class="submit-btn">
+          <button type="submit" name="updateRecipe" class="submit-btn" id="submitBtn">
             <i class="fas fa-save"></i> Update Recipe
           </button>
           <button type="button" class="cancel-btn" id="cancelBtn">
@@ -1188,7 +807,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
   <footer>
     © 2026 Kids Recipes — Made with 💖 for little ones
   </footer>
-
 </div>
 
 <script>
@@ -1200,6 +818,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
   const uploadArea = document.getElementById('uploadArea');
   const recipeImage = document.getElementById('recipeImage');
   const fileNameDisplay = document.getElementById('file-name');
+  const submitBtn = document.getElementById('submitBtn');
+  const photoErrorMsg = document.getElementById('photoErrorMsg');
 
   const nameCount = document.getElementById('nameCount');
   const descCount = document.getElementById('descCount');
@@ -1209,6 +829,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
   const videoOptions = document.querySelectorAll('input[name="videoOption"]');
   const urlInput = document.getElementById('urlInput');
   const uploadInput = document.getElementById('uploadInput');
+
+  // Variables to track if there's a photo
+  let hasExistingPhoto = <?php echo (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) ? 'true' : 'false'; ?>;
+  let newPhotoSelected = false;
 
   if (recipeNameInput) {
     recipeNameInput.addEventListener('input', function() {
@@ -1225,32 +849,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
   }
 
   if (uploadArea) {
-    uploadArea.addEventListener('click', function() {
-      recipeImage.click();
-    });
+    uploadArea.addEventListener('click', function() { if (recipeImage) recipeImage.click(); });
   }
 
   if (recipeImage) {
     recipeImage.addEventListener('change', function() {
       if (this.files.length > 0) {
-        const fileName = this.files[0].name;
-        fileNameDisplay.innerHTML = `<i class="fas fa-check-circle"></i> Selected: <strong>${fileName}</strong>`;
-        uploadArea.style.borderColor = '#B5EAD7';
-        uploadArea.style.backgroundColor = 'rgba(181, 234, 215, 0.1)';
+        newPhotoSelected = true;
+        if (fileNameDisplay) {
+          fileNameDisplay.innerHTML = `<i class="fas fa-check-circle"></i> Selected: <strong>${this.files[0].name}</strong>`;
+          fileNameDisplay.style.color = 'green';
+        }
+        if (uploadArea) uploadArea.style.borderColor = '#B5EAD7';
+        if (photoErrorMsg) photoErrorMsg.style.display = 'none';
       }
     });
   }
 
-  // Add ingredient
+  // Client-side validation before submit - PHOTO IS REQUIRED!
+  if (recipeForm) {
+    recipeForm.addEventListener('submit', function(e) {
+      // Check if there's an existing photo OR a new photo selected
+      if (!hasExistingPhoto && !newPhotoSelected) {
+        e.preventDefault();
+        if (photoErrorMsg) photoErrorMsg.style.display = 'block';
+        if (uploadArea) {
+          uploadArea.style.borderColor = '#FF9AA2';
+          uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return false;
+      }
+    });
+  }
+
   let ingredientCount = <?php echo count($ingredients) > 0 ? count($ingredients) : 1; ?>;
 
   if (addIngredientBtn) {
     addIngredientBtn.addEventListener('click', function() {
       ingredientCount++;
-
-      const newIngredientRow = document.createElement('div');
-      newIngredientRow.className = 'ingredient-row';
-      newIngredientRow.innerHTML = `
+      const newRow = document.createElement('div');
+      newRow.className = 'ingredient-row';
+      newRow.innerHTML = `
         <div class="form-group ingredient-name">
           <label>Ingredient Name <span class="required">*</span></label>
           <input type="text" name="ingredientName[]" placeholder="e.g., Cheese 🧀" required>
@@ -1265,34 +904,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
           </button>
         </div>
       `;
-
-      ingredientsContainer.appendChild(newIngredientRow);
-
-      const removeBtn = newIngredientRow.querySelector('.remove-ingredient');
-      removeBtn.addEventListener('click', function() {
-        ingredientsContainer.removeChild(newIngredientRow);
+      ingredientsContainer.appendChild(newRow);
+      newRow.querySelector('.remove-ingredient').addEventListener('click', function() {
+        ingredientsContainer.removeChild(newRow);
         ingredientCount--;
       });
     });
   }
 
-  // Add step
   let stepCount = <?php echo count($instructions) > 0 ? count($instructions) : 1; ?>;
 
   function updateStepNumbers() {
-    const stepCounters = document.querySelectorAll('.step-counter');
-    stepCounters.forEach((counter, index) => {
-      counter.textContent = index + 1;
-    });
+    document.querySelectorAll('.step-counter').forEach((counter, idx) => { counter.textContent = idx + 1; });
   }
 
   if (addStepBtn) {
     addStepBtn.addEventListener('click', function() {
       stepCount++;
-
-      const newStepRow = document.createElement('div');
-      newStepRow.className = 'step-row';
-      newStepRow.innerHTML = `
+      const newRow = document.createElement('div');
+      newRow.className = 'step-row';
+      newRow.innerHTML = `
         <div class="form-group step-number">
           <label>Step #<span class="step-counter">${stepCount}</span></label>
           <input type="text" name="stepTitle[]" placeholder="Step title (optional)">
@@ -1307,49 +938,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
           </button>
         </div>
       `;
-
-      stepsContainer.appendChild(newStepRow);
-
-      const removeBtn = newStepRow.querySelector('.remove-step');
-      removeBtn.addEventListener('click', function() {
-        stepsContainer.removeChild(newStepRow);
+      stepsContainer.appendChild(newRow);
+      newRow.querySelector('.remove-step').addEventListener('click', function() {
+        stepsContainer.removeChild(newRow);
         stepCount--;
         updateStepNumbers();
       });
-
-      if (stepCount > 1) {
-        const firstRemoveBtn = document.querySelectorAll('.remove-step')[0];
-        if (firstRemoveBtn) firstRemoveBtn.style.display = 'block';
-      }
       updateStepNumbers();
     });
   }
 
-  // Video options
   if (videoOptions.length) {
     videoOptions.forEach(option => {
       option.addEventListener('change', function() {
-        urlInput.classList.remove('active');
-        uploadInput.classList.remove('active');
-
-        if (this.value === 'url') {
-          urlInput.classList.add('active');
-        } else if (this.value === 'upload') {
-          uploadInput.classList.add('active');
-        }
+        if (urlInput) urlInput.style.display = 'none';
+        if (uploadInput) uploadInput.style.display = 'none';
+        if (this.value === 'url' && urlInput) urlInput.style.display = 'block';
+        else if (this.value === 'upload' && uploadInput) uploadInput.style.display = 'block';
       });
     });
   }
 
-  // Cancel button
   const cancelBtn = document.getElementById('cancelBtn');
   if (cancelBtn) {
-    cancelBtn.addEventListener('click', function() {
-      window.location.href = 'my-recipes.php';
-    });
+    cancelBtn.addEventListener('click', function() { window.location.href = 'myrecipes.php'; });
   }
 
-  // Change image button
   const changeImageBtn = document.getElementById('changeImageBtn');
   const currentImage = document.getElementById('currentImage');
   const uploadSection = document.getElementById('uploadSection');
@@ -1358,10 +972,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
     changeImageBtn.addEventListener('click', function() {
       if (currentImage) currentImage.style.display = 'none';
       if (uploadSection) uploadSection.style.display = 'block';
+      hasExistingPhoto = false;
     });
   }
 
-  // Remove existing ingredients
   document.querySelectorAll('.remove-ingredient').forEach(btn => {
     btn.addEventListener('click', function() {
       const row = this.closest('.ingredient-row');
@@ -1372,7 +986,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
     });
   });
 
-  // Remove existing steps
   document.querySelectorAll('.remove-step').forEach(btn => {
     btn.addEventListener('click', function() {
       const row = this.closest('.step-row');
@@ -1383,12 +996,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
       }
     });
   });
-
-  function setActive(element) {
-    const links = document.querySelectorAll("nav a");
-    links.forEach(link => link.classList.remove("active"));
-    element.classList.add("active");
-  }
 </script>
 
 </body>
