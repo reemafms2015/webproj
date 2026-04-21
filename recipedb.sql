@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8889
--- Generation Time: Apr 21, 2026 at 01:04 PM
+-- Generation Time: Apr 21, 2026 at 04:29 PM
 -- Server version: 5.7.24
 -- PHP Version: 8.3.1
 
@@ -39,9 +39,9 @@ CREATE TABLE `blockeduser` (
 --
 
 INSERT INTO `blockeduser` (`id`, `firstName`, `lastName`, `emailAddress`) VALUES
-(1, 'rana', 'khalid', 'rana@hotmail.com'),
-(2, 'sara', 'saud', 'sarasaud@gmail.com'),
-(3, 'hana', 'faisal', 'hanafaisal@gmail.com');
+(4, 'laya', 'Mohamad', 'layaa5@gmail.com'),
+(5, 'sama', 'nasser', 'sama1@gmail.com'),
+(6, 'GHENA', 'FAHD', 'ghenafahad982@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -62,9 +62,9 @@ CREATE TABLE `comment` (
 --
 
 INSERT INTO `comment` (`id`, `recipeID`, `userID`, `comment`, `data`) VALUES
-(1, 2, 2, 'so good i like it ', '2026-04-01'),
-(2, 3, 6, 'the perfict one!!!', '2026-04-08'),
-(3, 5, 2, 'my kids like it so much', '2026-04-02');
+(1, 2, 10, 'so good i like it ', '2026-04-01'),
+(2, 3, 12, 'the perfict one!!!', '2026-04-08'),
+(3, 5, 12, 'my kids like it so much', '2026-04-02');
 
 -- --------------------------------------------------------
 
@@ -82,9 +82,9 @@ CREATE TABLE `favourites` (
 --
 
 INSERT INTO `favourites` (`userID`, `recipeID`) VALUES
-(2, 2),
-(3, 3),
-(6, 5);
+(10, 3),
+(12, 2),
+(12, 5);
 
 -- --------------------------------------------------------
 
@@ -146,9 +146,9 @@ CREATE TABLE `likes` (
 --
 
 INSERT INTO `likes` (`userID`, `recipeID`) VALUES
-(2, 2),
-(2, 5),
-(3, 3);
+(10, 2),
+(10, 5),
+(12, 3);
 
 -- --------------------------------------------------------
 
@@ -171,10 +171,10 @@ CREATE TABLE `recipe` (
 --
 
 INSERT INTO `recipe` (`id`, `userID`, `categoryID`, `name`, `description`, `photoFileName`, `videoFilePath`) VALUES
-(2, 2, 1, 'Bananapancake', 'Soft and healthy banana pancakes made with simple ingredients. Perfect for kids and super easy to prepare.', 'banana-pancakes_0101.png', 'banana_0102.mp4'),
-(3, 3, 3, 'FruitYogurtcups', 'A healthy and refreshing breakfast made with creamy yogurt and fresh mixed fruits. Perfect for kids to start their day with a nutritious and energy boosting meal.', 'yogurt_0104.png', 'yogurt_1015.mp4'),
-(5, 2, 1, 'veggie Omelette', 'A delicious and nutritious breakfast omelette made with eggs, vegetables, and cheese. A great way to give kids a balanced meal full of protein and essential nutrients.', 'omelette_45609.png', 'omelette_7895.mp4'),
-(6, 6, 2, 'Chicken & Rise', 'a delicious chicken and rice made with tender chicken and flavorful rice. This healthy and balanced meal is perfect for kids, providing protein and energy to start the day', 'chicken-rice_56732.png', 'chicken-rice_09834.png.mp4');
+(2, 12, 1, 'Bananapancake', 'Soft and healthy banana pancakes made with simple ingredients. Perfect for kids and super easy to prepare.', 'banana-pancakes_0101.png', 'banana_0102.mp4'),
+(3, 10, 3, 'FruitYogurtcups', 'A healthy and refreshing breakfast made with creamy yogurt and fresh mixed fruits. Perfect for kids to start their day with a nutritious and energy boosting meal.', 'yogurt_0104.png', 'yogurt_1015.mp4'),
+(5, 12, 1, 'veggie Omelette', 'A delicious and nutritious breakfast omelette made with eggs, vegetables, and cheese. A great way to give kids a balanced meal full of protein and essential nutrients.', 'omelette_45609.png', 'omelette_7895.mp4'),
+(6, 10, 2, 'Chicken & Rise', 'a delicious chicken and rice made with tender chicken and flavorful rice. This healthy and balanced meal is perfect for kids, providing protein and energy to start the day', 'chicken-rice_56732.png', 'chicken-rice_09834.png.mp4');
 
 -- --------------------------------------------------------
 
@@ -213,9 +213,9 @@ CREATE TABLE `report` (
 --
 
 INSERT INTO `report` (`id`, `userID`, `recipeID`) VALUES
-(7, 1, 2),
-(8, 3, 3),
-(9, 3, 5);
+(7, 13, 2),
+(8, 10, 3),
+(9, 12, 5);
 
 -- --------------------------------------------------------
 
@@ -238,10 +238,12 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`id`, `userType`, `firstName`, `lastName`, `emailAddress`, `password`, `photoFileName`) VALUES
-(1, 'admin', 'Rema', 'saud', 'Rema@gmail.com', '12345', 'profile.png'),
-(2, 'User', 'rana', 'khalid', 'rana@hotmail.com', '1234', 'profile.png'),
-(3, 'user', 'sara', 'saud', 'sarasaud@gmail.com', '12345', 'sara.png'),
-(6, 'User', 'nora', 'faisal', 'norafaisal@gmail.com', '890', 'nora.png');
+(10, 'user', 'nora', 'faisall', 'norafaisll@gmail.com', '$2y$10$hFsgszwvwO09bz.8Ib1SSOzeu7b36cy/uEA9G.YCR9cGLwgZxdvoC', 'user_10.png'),
+(12, 'User', 'saraa', 'Saud', 'saraU1@hotmail.com', '$2y$10$dYQd12SrTCxiul0lDgTuHuQ9FbxEmqLFNgCclmJzexXG3SQIWlvPO', 'user_12.png'),
+(13, 'admin', 'Reema', 'faisall', 'reemo1@hotmail.com', '$2y$10$MaZAPFO7xVjp3ApIrNURvODZWY6qInOP3KIqAZ2ilxgays6paZaiy', 'user_13.png'),
+(14, 'user', 'GHENA', 'FAHD', 'ghenafahad982@gmail.com', '$2y$10$kT0.JL5qOZHxUgRsrHs6fOwFmAgFNWkVjjrCqhe1dI2Ylf9TI6h1i', 'default.png'),
+(15, 'user', 'sama', 'nasser', 'sama1@gmail.com', '$2y$10$9XC8p29sixkb5fRDOdARC.TRSyUz768woGlj1uCMSXB5k14hZdERi', 'default.png'),
+(16, 'user', 'laya', 'Mohamad', 'layaa5@gmail.com', '$2y$10$4ilegm7MMBNgdTevikqzXuNHH8Z9G0UZT3whbpG5MNLMQDmNekbdO', 'default.png');
 
 --
 -- Indexes for dumped tables
@@ -329,7 +331,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `blockeduser`
 --
 ALTER TABLE `blockeduser`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `comment`
@@ -371,7 +373,7 @@ ALTER TABLE `report`
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- Constraints for dumped tables
