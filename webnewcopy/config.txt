@@ -5,6 +5,24 @@ Host: localhost
 //User1
 Email: ghena8@gmail.com 
 Password: 123456
-//User1
+//User2
 Email: layaa5@gmail.com
+Password: 123456
+//User3
+Email: sama1@gmail.com
+Password: 123456
+//User4
+Email: saraU1@hotmail.com
+Password: 123456
+//User5
+Email:ghenafahd5@gmail.com
+Password: 123456
+//User6
+Email:norafaisll@gmail.com
+Password: 123456
+//User7
+Email: reemo1@hotmail.com
+Password: 123456
+//User8
+Email:ghenafahad982@gmail.com
 Password: 123456
