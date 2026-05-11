@@ -7,7 +7,7 @@ Email: ghena8@gmail.com
 Password: 123456
 //User2
 Email: layaa5@gmail.com
-Password: 123456
+Password: 123
 //User3
 Email: sama1@gmail.com
 Password: 123456
