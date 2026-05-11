@@ -10,7 +10,7 @@ Email: layaa5@gmail.com
 Password: 123
 //User3
 Email: sama1@gmail.com
-Password: 123456
+Password: 123
 //User4
 Email: saraU1@hotmail.com
 Password: 123456
@@ -19,7 +19,7 @@ Email:ghenafahd5@gmail.com
 Password: 123456
 //User6
 Email:norafaisll@gmail.com
-Password: 123456
+Password: qwe123
 //User7
 Email: reemo1@hotmail.com
 Password: 123456
