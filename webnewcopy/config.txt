@@ -2,3 +2,9 @@ Database Name: recipedb
 Username: root
 Password: 
 Host: localhost
+//User1
+Email: ghena8@gmail.com 
+Password: 123456
+//User1
+Email: layaa5@gmail.com
+Password: 123456
