@@ -521,7 +521,10 @@ a:hover {
                                 <img src="<?php echo htmlspecialchars($favPhoto); ?>" class="recipeImg" alt="Favourite Recipe Photo">
                             </td>
                             <td>
-                                <a href="removeFavourite.php?recipeID=<?php echo $fav['id']; ?>">Remove</a>
+                                <a href="#" class="removeFavourite"
+                                data-id="<?php echo $fav['id']; ?>">
+                                Remove
+                                </a>
                             </td>
                         </tr>
                     <?php } ?>
@@ -629,6 +632,32 @@ categorySelect.addEventListener("change", function () {
 
 });
 
+</script>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<script>
+$(document).ready(function () {
+    $(".removeFavourite").click(function (e) {
+        e.preventDefault();
+
+        var link = $(this);
+        var recipeID = link.data("id");
+
+        $.ajax({
+            url: "removeFavourite.php",
+            type: "POST",
+            data: { recipeID: recipeID },
+            success: function (response) {
+                if (response.trim() === "true") {
+                    link.closest("tr").remove();
+                } else {
+                    alert("Could not remove recipe from favourites.");
+                }
+            }
+        });
+    });
+});
 </script>
 </body>
 </html>
