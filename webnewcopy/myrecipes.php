@@ -314,7 +314,7 @@ function getRecipePhoto($recipeName, $photoFileName) {
                     $instructionsQuery = "SELECT * FROM instructions WHERE recipeID = $recipeID ORDER BY stepOrder";
                     $instructionsResult = mysqli_query($conn, $instructionsQuery);
                     ?>
-                    <tr>
+                   <tr id="recipeRow<?php echo $recipeID; ?>">
                         <td>
                             <a href="view-recipe.php?id=<?php echo $recipeID; ?>">
                                 <?php echo htmlspecialchars($recipe['name']); ?>
@@ -363,8 +363,10 @@ function getRecipePhoto($recipeName, $photoFileName) {
                         </td>
 
                         <td>
-                            <a href="deleteRecipe.php?recipeID=<?php echo $recipeID; ?>" onclick="return confirm('Are you sure you want to delete this recipe?');">Delete</a>
-                        </td>
+    <button class="deleteBtn" data-id="<?php echo $recipeID; ?>">
+        Delete
+    </button>
+</td>
                     </tr>
                 <?php } ?>
             </table>
@@ -383,6 +385,36 @@ function getRecipePhoto($recipeName, $photoFileName) {
 <footer>
     © 2026 Kids Recipes — Made with 💖 for little ones
 </footer>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<script>
+$(document).ready(function(){
+
+    $(".deleteBtn").click(function(){
+
+        var button = $(this);
+        var recipeID = button.data("id");
+
+        if(confirm("Are you sure you want to delete this recipe?")){
+
+            $.post("deleteRecipe.php",
+                { recipeID: recipeID },
+                function(response){
+
+                    if(response.trim() == "true"){
+
+                        $("#recipeRow" + recipeID).remove();
+                        alert("Recipe deleted successfully");
+
+                    } else {
+
+                        alert("Delete failed");
+                    }
+                }
+            );
+        }
+    });
+});
+</script>
 </body>
 </html>
