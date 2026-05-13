@@ -57,7 +57,8 @@ table{width:100%;border-collapse:collapse;background:#fff;border:2px solid rgba(
 a{color:inherit;text-decoration:none;} .recipe-link{color:#5D576B;font-weight:600;cursor:pointer;} .recipe-link:hover{color:#FF9AA2;} .creator-cell{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .avatar{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);background:#fff;} .radio-group{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;} .radio-item{display:flex;align-items:center;gap:10px;font-weight:800;}
 .submit-btn{border:none;cursor:pointer;border-radius:10px;padding:12px 18px;font-weight:900;font-family:'Comic Neue',cursive;background:var(--green);color:var(--dark);box-shadow:0 5px 0 #8FD5B7;transition:var(--t);min-width:120px;}
-.submit-btn:hover{transform:translateY(-3px);box-shadow:0 8px 0 #8FD5B7;} .small-note{font-size:0.9rem;opacity:0.8;margin-top:10px;line-height:1.6;} .msg-box{background:#fff6d8;border:2px solid #ffe08a;padding:12px;border-radius:12px;margin-bottom:18px;font-weight:700;}
+.submit-btn:hover{transform:translateY(-3px);box-shadow:0 8px 0 #8FD5B7;} .submit-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.small-note{font-size:0.9rem;opacity:0.8;margin-top:10px;line-height:1.6;} .msg-box{background:#fff6d8;border:2px solid #ffe08a;padding:12px;border-radius:12px;margin-bottom:18px;font-weight:700;}
 @media (max-width:820px){.welcome{font-size:1.8rem;} th,td{padding:12px 10px;} .creator-cell{flex-direction:column;align-items:flex-start;} .avatar{width:50px;height:50px;}}
 </style>
 </head>
@@ -72,18 +73,35 @@ a{color:inherit;text-decoration:none;} .recipe-link{color:#5D576B;font-weight:60
 <?php if (isset($_GET['msg'])) { ?><div class="msg-box"><?php echo $_GET['msg']; ?></div><?php } ?>
 <section class="panel"><div class="panel-title">My Information</div><div class="info-lines"><div><b>Name</b><span><?php echo $admin['firstName'] . " " . $admin['lastName']; ?></span></div><div><b>Email address</b><span><?php echo $admin['emailAddress']; ?></span></div></div></section>
 <div class="section-title">📝Reported Recipes</div>
-<section class="panel" style="padding:0; overflow:auto;"><table><thead><tr><th style="width:40%;">Recipe Name</th><th style="width:30%;">Recipe Creator</th><th style="width:30%;">Action</th></tr></thead><tbody>
+<section class="panel" style="padding:0; overflow:auto;">
+<table id="reportsTable">
+<thead><tr><th style="width:40%;">Recipe Name</th><th style="width:30%;">Recipe Creator</th><th style="width:30%;">Action</th></tr></thead>
+<tbody>
 <?php if (mysqli_num_rows($reports) > 0) { ?>
 <?php while($row = mysqli_fetch_assoc($reports)) { ?>
 <?php $creatorPhoto = !empty($row['photoFileName']) ? $row['photoFileName'] : 'default-user.png'; ?>
-<tr>
+<tr id="report-row-<?php echo $row['reportID']; ?>">
 <td><a href="view-recipe.php?id=<?php echo $row['recipeID']; ?>"><div class="recipe-link"><?php echo $row['name']; ?></div></a></td>
 <td><div class="creator-cell"><div><div style="font-weight:900;"><?php echo $row['firstName'] . " " . $row['lastName']; ?></div><div class="small-note">Creator</div></div><img class="avatar" src="<?php echo $creatorPhoto; ?>" alt="creator photo"></div></td>
-<td><form action="handle-report.php" method="POST"><input type="hidden" name="recipeID" value="<?php echo $row['recipeID']; ?>"><input type="hidden" name="userID" value="<?php echo $row['creatorID']; ?>"><input type="hidden" name="reportID" value="<?php echo $row['reportID']; ?>"><div class="radio-group"><label class="radio-item"><input type="radio" name="action" value="block" required> Block User</label><label class="radio-item"><input type="radio" name="action" value="dismiss"> Dismiss Report</label></div><button class="submit-btn" type="submit">Submit</button></form></td>
+<td>
+    <div class="radio-group">
+        <label class="radio-item"><input type="radio" name="action-<?php echo $row['reportID']; ?>" value="block" required> Block User</label>
+        <label class="radio-item"><input type="radio" name="action-<?php echo $row['reportID']; ?>" value="dismiss"> Dismiss Report</label>
+    </div>
+    <button class="submit-btn"
+            type="button"
+            data-report-id="<?php echo $row['reportID']; ?>"
+            data-recipe-id="<?php echo $row['recipeID']; ?>"
+            data-user-id="<?php echo $row['creatorID']; ?>">
+        Submit
+    </button>
+</td>
 </tr>
 <?php } ?>
-<?php } else { ?><tr><td colspan="3" style="text-align:center;">No reports found.</td></tr><?php } ?>
-</tbody></table></section>
+<?php } else { ?><tr id="no-reports-row"><td colspan="3" style="text-align:center;">No reports found.</td></tr><?php } ?>
+</tbody>
+</table>
+</section>
 <div class="section-title" style="margin-top:22px;">🔒Blocked Users List</div>
 <section class="panel" style="padding:0; overflow:auto;"><table><thead><tr><th>Name</th><th>Email Address</th></tr></thead><tbody>
 <?php if (mysqli_num_rows($blockedUsers) > 0) { ?>
@@ -94,5 +112,63 @@ a{color:inherit;text-decoration:none;} .recipe-link{color:#5D576B;font-weight:60
 </tbody></table></section>
 </main></div></div>
 <footer>© 2026 Kids Recipes — Made with 💖 for little ones</footer>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+$(document).ready(function () {
+
+    // When any Submit button is clicked in the reports table
+    $('#reportsTable').on('click', '.submit-btn', function () {
+        var btn      = $(this);
+        var reportID = btn.data('report-id');
+        var recipeID = btn.data('recipe-id');
+        var userID   = btn.data('user-id');
+
+        // Get the selected radio value for this specific report row
+        var action = $('input[name="action-' + reportID + '"]:checked').val();
+
+        if (!action) {
+            alert('Please select an action first.');
+            return;
+        }
+
+        // Disable button while processing
+        btn.prop('disabled', true).text('Processing...');
+
+        $.ajax({
+            url: 'handle-report.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                recipeID : recipeID,
+                userID   : userID,
+                reportID : reportID,
+                action   : action
+            },
+            success: function (response) {
+                if (response === true) {
+                    // Remove the row from the table
+                    var tbody = $('#reportsTable tbody');
+                    $('#report-row-' + reportID).remove();
+
+                    // If no rows left, show "No reports found"
+                    if (tbody.find('tr').length === 0) {
+                        tbody.append('<tr id="no-reports-row"><td colspan="3" style="text-align:center;">No reports found.</td></tr>');
+                    }
+                } else {
+                    alert('Something went wrong. Please try again.');
+                    btn.prop('disabled', false).text('Submit');
+                }
+            },
+            error: function () {
+                alert('Request failed. Please try again.');
+                btn.prop('disabled', false).text('Submit');
+            }
+        });
+    });
+
+});
+</script>
 </body>
 </html>
