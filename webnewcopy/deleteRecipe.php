@@ -1,36 +1,42 @@
 <?php
-/* Start session */
 session_start();
-
-/* Connect to database */
 include "db.php";
 
-/* Check login */
-if (!isset($_SESSION['userID']) || !isset($_SESSION['userType'])) {
-    header("Location: login.html?error=Please log in first");
+if (!isset($_SESSION['userID'])) {
+    echo "false";
     exit();
 }
 
 $userID = (int) $_SESSION['userID'];
 
-/* Check recipe id */
-if (!isset($_GET['recipeID']) || $_GET['recipeID'] == "") {
-    header("Location: myRecipes.php");
+if (!isset($_POST['recipeID'])) {
+    echo "false";
     exit();
 }
 
-$recipeID = (int) $_GET['recipeID'];
+$recipeID = (int) $_POST['recipeID'];
 
-/* Make sure the recipe belongs to this user */
 $checkQuery = "SELECT * FROM recipe WHERE id = $recipeID AND userID = $userID";
 $checkResult = mysqli_query($conn, $checkQuery);
 
 if (!$checkResult || mysqli_num_rows($checkResult) == 0) {
-    header("Location: myRecipes.php");
+    echo "false";
     exit();
 }
 
-/* Delete related rows first */
+$recipe = mysqli_fetch_assoc($checkResult);
+
+$photo = $recipe['photoFileName'];
+$video = $recipe['videoFilePath'];
+
+if (!empty($photo) && file_exists($photo)) {
+    unlink($photo);
+}
+
+if (!empty($video) && file_exists($video)) {
+    unlink($video);
+}
+
 mysqli_query($conn, "DELETE FROM likes WHERE recipeID = $recipeID");
 mysqli_query($conn, "DELETE FROM favourites WHERE recipeID = $recipeID");
 mysqli_query($conn, "DELETE FROM ingredients WHERE recipeID = $recipeID");
@@ -38,10 +44,11 @@ mysqli_query($conn, "DELETE FROM instructions WHERE recipeID = $recipeID");
 mysqli_query($conn, "DELETE FROM comment WHERE recipeID = $recipeID");
 mysqli_query($conn, "DELETE FROM report WHERE recipeID = $recipeID");
 
-/* Delete recipe */
-mysqli_query($conn, "DELETE FROM recipe WHERE id = $recipeID AND userID = $userID");
+$deleteRecipe = mysqli_query($conn, "DELETE FROM recipe WHERE id = $recipeID AND userID = $userID");
 
-/* Go back to my recipes page  */
-header("Location: myRecipes.php");
-exit();
+if ($deleteRecipe) {
+    echo "true";
+} else {
+    echo "false";
+}
 ?>
