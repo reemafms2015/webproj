@@ -2,12 +2,27 @@
 session_start();
 include("db.php");
 
+
+
+
+
+//************************* For AJAX 
+$isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
 if (!isset($_SESSION['userID']) || !isset($_SESSION['userType']) || $_SESSION['userType'] != 'admin') {
+    if ($isAjax) {
+        echo json_encode(false);
+        exit();
+    }
     header("Location: login.php?msg=You must log in as admin first");
     exit();
 }
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
+    if ($isAjax) {
+        echo json_encode(false);
+        exit();
+    }
     header("Location: admin.php?msg=Invalid request");
     exit();
 }
@@ -18,6 +33,10 @@ $reportID = $_POST['reportID'];
 $action   = $_POST['action'];
 
 if ($action != "block" && $action != "dismiss") {
+    if ($isAjax) {
+        echo json_encode(false);
+        exit();
+    }
     header("Location: admin.php?msg=Invalid action selected");
     exit();
 }
@@ -26,8 +45,12 @@ if ($action == "dismiss") {
     $sqlDeleteReport = "DELETE FROM report WHERE id = ?";
     $stmtDeleteReport = mysqli_prepare($conn, $sqlDeleteReport);
     mysqli_stmt_bind_param($stmtDeleteReport, "i", $reportID);
-    mysqli_stmt_execute($stmtDeleteReport);
+    $success = mysqli_stmt_execute($stmtDeleteReport);
 
+    if ($isAjax) {
+        echo json_encode($success ? true : false);
+        exit();
+    }
     header("Location: admin.php?msg=Report dismissed successfully");
     exit();
 }
@@ -40,6 +63,10 @@ if ($action == "block") {
     $resultUser = mysqli_stmt_get_result($stmtUser);
 
     if (mysqli_num_rows($resultUser) == 0) {
+        if ($isAjax) {
+            echo json_encode(false);
+            exit();
+        }
         header("Location: admin.php?msg=User not found");
         exit();
     }
@@ -131,13 +158,17 @@ if ($action == "block") {
     $sqlDeleteUser = "DELETE FROM user WHERE id = ?";
     $stmtDeleteUser = mysqli_prepare($conn, $sqlDeleteUser);
     mysqli_stmt_bind_param($stmtDeleteUser, "i", $userID);
-    mysqli_stmt_execute($stmtDeleteUser);
+    $success = mysqli_stmt_execute($stmtDeleteUser);
 
     $sqlDeleteReport = "DELETE FROM report WHERE id = ?";
     $stmtDeleteReport = mysqli_prepare($conn, $sqlDeleteReport);
     mysqli_stmt_bind_param($stmtDeleteReport, "i", $reportID);
     mysqli_stmt_execute($stmtDeleteReport);
 
+    if ($isAjax) {
+        echo json_encode($success ? true : false);
+        exit();
+    }
     header("Location: admin.php?msg=User blocked and all related data deleted successfully");
     exit();
 }
