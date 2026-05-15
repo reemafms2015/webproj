@@ -4,35 +4,24 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$conn = new mysqli("localhost", "root", "root", "recipedb", 8889);
+include("db.php");
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!isset($_SESSION['userID'])) {
+    header("Location: login.html");
+    exit();
 }
 
-
-
-
-
 //_____ Retrieve categories from database___________-
-
-
 $categoriesQuery = "SELECT id, categoryname FROM recipecategory ORDER BY id";
 $categoriesResult = $conn->query($categoriesQuery);
 $categories = [];
 if ($categoriesResult->num_rows > 0) {
-    while($row = $categoriesResult->fetch_assoc()) {
+    while ($row = $categoriesResult->fetch_assoc()) {
         $categories[] = $row;
     }
 }
 
-
-
-
-
-
-
-$userID = $_SESSION['userID'] ?? 2;
+$userID = (int) $_SESSION['userID'];
 
 $successMessage = '';
 $errorMessage = '';
@@ -49,52 +38,37 @@ function cleanFileName($name) {
 
 function getUploadPath($type) {
     if ($type === 'image') {
-        $dir = 'uploads/images/';
+        $dir = 'images/recipes/';
     } elseif ($type === 'video') {
-        $dir = 'uploads/videos/';
+        $dir = 'videos/';
     } else {
-        $dir = 'uploads/';
+        $dir = '';
     }
-    if (!is_dir($dir)) {
+
+    if (!empty($dir) && !is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
+
     return $dir;
 }
 
-
-
-
-
-
-
 // ___________When form is submitted__________________--
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
-    
+
     if (!isset($_FILES['photoFileName']) || $_FILES['photoFileName']['error'] === UPLOAD_ERR_NO_FILE) {
         $errorMessage = "❌ Please upload a recipe image! The picture is required. 📸";
     } else {
-        
+
         $name = $conn->real_escape_string($_POST['name']);
-        $categoryID = (int)$_POST['categoryID'];
+        $categoryID = (int) $_POST['categoryID'];
         $description = $conn->real_escape_string($_POST['description']);
-        
+
+        // IMPORTANT: store file names only in DB
         $photoFileName = "";
         $videoFilePath = "";
         $photoError = false;
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         //____________________ Upload recipe image____________________
-        
         if ($_FILES['photoFileName']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = getUploadPath('image');
             $fileTmpPath = $_FILES['photoFileName']['tmp_name'];
@@ -102,74 +76,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
             $fileExtension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
             $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             $maxFileSize = 5 * 1024 * 1024;
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+
             //______________________ Validate image size and format________________
-            
             if ($_FILES['photoFileName']['size'] > $maxFileSize) {
                 $errorMessage = "❌ Image file is too large! Maximum size is 5MB.";
                 $photoError = true;
-            }
-            elseif (!in_array($fileExtension, $allowedExtensions)) {
+            } elseif (!in_array($fileExtension, $allowedExtensions)) {
                 $errorMessage = "❌ Invalid image format! Please use JPG, PNG, GIF, or WebP.";
                 $photoError = true;
-            }
-            else {
+            } else {
                 $cleanName = cleanFileName($name);
                 $randomDigits = getRandomDigits();
                 $newFileName = $cleanName . '_' . $randomDigits . '.' . $fileExtension;
                 $destPath = $uploadDir . $newFileName;
-                
+
                 if (move_uploaded_file($fileTmpPath, $destPath)) {
-                    $photoFileName = $destPath;
+                    $photoFileName = $newFileName; // store filename only
                 } else {
                     $errorMessage = "❌ Failed to upload image. Please try again!";
                     $photoError = true;
                 }
             }
         }
-        
+
         if (!$photoError && empty($errorMessage)) {
-            
+
             if (isset($_POST['videoOption'])) {
-                
-                
-                
-                
-                
-                
-                
-                
+
                 //_____________ Save video URL if provided____________________
-                
-                
                 if ($_POST['videoOption'] === 'url' && !empty($_POST['videoUrl'])) {
-                    $originalVideoUrl = $_POST['videoUrl'];
-                    if (strpos($originalVideoUrl, '?') !== false) {
-                        $videoFilePath = $originalVideoUrl . '&temp_id=' . time();
-                    } else {
-                        $videoFilePath = $originalVideoUrl . '?temp_id=' . time();
-                    }
-                } 
-                
-                
-                
-                
-                
-                
-                
-                
+                    $videoFilePath = $conn->real_escape_string($_POST['videoUrl']);
+                }
+
                 // ____________________Upload video file if selected________________
-                
                 elseif ($_POST['videoOption'] === 'upload' && isset($_FILES['videoFile']) && $_FILES['videoFile']['error'] === UPLOAD_ERR_OK) {
                     $uploadDir = getUploadPath('video');
                     $fileTmpPath = $_FILES['videoFile']['tmp_name'];
@@ -177,21 +116,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                     $fileExtension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
                     $allowedVideoExtensions = ['mp4', 'avi', 'mov', 'mpeg', 'webm'];
                     $maxVideoSize = 50 * 1024 * 1024;
-                    
+
                     if ($_FILES['videoFile']['size'] > $maxVideoSize) {
                         $errorMessage = "❌ Video file is too large! Maximum size is 50MB.";
-                    }
-                    elseif (!in_array($fileExtension, $allowedVideoExtensions)) {
+                    } elseif (!in_array($fileExtension, $allowedVideoExtensions)) {
                         $errorMessage = "❌ Invalid video format! Please use MP4, AVI, MOV, MPEG, or WebM.";
-                    }
-                    else {
+                    } else {
                         $cleanName = cleanFileName($name);
                         $randomDigits = getRandomDigits();
-                        $newFileName = $cleanName . '_video_' . $randomDigits . '.' . $fileExtension;
+                        $newFileName = $cleanName . '_' . $randomDigits . '.' . $fileExtension;
                         $destPath = $uploadDir . $newFileName;
-                        
+
                         if (move_uploaded_file($fileTmpPath, $destPath)) {
-                            $videoFilePath = $destPath;
+                            $videoFilePath = $newFileName; // store filename only
                         } else {
                             $errorMessage = "❌ Failed to upload video. Please try again!";
                         }
@@ -199,99 +136,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
                 }
             }
         }
-        
+
         if (!$photoError && empty($errorMessage)) {
-            
-            
-            
-            
-            
-            
-            
+
             //_______________- Insert new recipe into database_______________-
-            
             $insertRecipeQuery = "INSERT INTO recipe (userID, categoryID, name, description, photoFileName, videoFilePath) 
                                   VALUES ($userID, $categoryID, '$name', '$description', '$photoFileName', '$videoFilePath')";
-            
+
             if ($conn->query($insertRecipeQuery) === TRUE) {
                 $recipeID = $conn->insert_id;
-                
-                if (isset($_POST['videoOption']) && $_POST['videoOption'] === 'url' && !empty($_POST['videoUrl'])) {
-                    $originalVideoUrl = $_POST['videoUrl'];
-                    if (strpos($originalVideoUrl, '?') !== false) {
-                        $finalVideoUrl = $originalVideoUrl . '&recipe_id=' . $recipeID;
-                    } else {
-                        $finalVideoUrl = $originalVideoUrl . '?recipe_id=' . $recipeID;
-                    }
-                    $conn->query("UPDATE recipe SET videoFilePath = '$finalVideoUrl' WHERE id = $recipeID");
-                }
-                
+
                 if (!empty($_POST['ingredientName'])) {
-                    
-                    
-                    
-                    
-                    
-                    
                     // ________________Insert ingredients for the recipe___________________
-                    
                     $stmt = $conn->prepare("INSERT INTO ingredients (recipeID, ingredientName, ingredientQuantity) VALUES (?, ?, ?)");
-                    
+
                     foreach ($_POST['ingredientName'] as $i => $ingredientName) {
                         if (!empty($ingredientName) && !empty($_POST['ingredientQuantity'][$i])) {
-                            $ingredientQuantity = $_POST['ingredientQuantity'][$i];
+                            $ingredientName = trim($ingredientName);
+                            $ingredientQuantity = trim($_POST['ingredientQuantity'][$i]);
                             $stmt->bind_param("iss", $recipeID, $ingredientName, $ingredientQuantity);
                             $stmt->execute();
                         }
                     }
                     $stmt->close();
                 }
-                
+
                 if (!empty($_POST['stepDescription'])) {
-                    
-                    
-                    
-                    
-                    
-                    
                     //_____________ Insert instructions (steps) for the recipe_________
-                    
-                    
                     $stmt = $conn->prepare("INSERT INTO instructions (recipeID, step, stepOrder) VALUES (?, ?, ?)");
-                    
+
                     foreach ($_POST['stepDescription'] as $i => $stepDescription) {
                         if (!empty($stepDescription)) {
                             $stepOrder = $i + 1;
-                            $stepTitle = !empty($_POST['stepTitle'][$i]) ? $_POST['stepTitle'][$i] . ': ' : '';
-                            $fullStep = $stepTitle . $stepDescription;
+                            $stepTitle = !empty($_POST['stepTitle'][$i]) ? trim($_POST['stepTitle'][$i]) . ': ' : '';
+                            $fullStep = $stepTitle . trim($stepDescription);
                             $stmt->bind_param("isi", $recipeID, $fullStep, $stepOrder);
                             $stmt->execute();
                         }
                     }
                     $stmt->close();
                 }
-                
+
                 $successMessage = "✅ Recipe '$name' has been saved successfully! 🎉";
-                
+
                 echo "<script>
                         setTimeout(function() {
-                        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            // ______________________Redirect to my recipes page after adding_________________
-
                             window.location.href = 'myrecipes.php';
                         }, 2000);
                       </script>";
@@ -899,9 +788,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     </div>
 
     <nav>
-      <a href="index.php">Home</a>
-      <a href="#">Users</a>
-      <a href="#">Admins</a>
+      <a href="index.html">Home</a>
+      <a href="user.php">Users</a>
+      <a href="admin.php">Admins</a>
     </nav>
   </header>
 
@@ -930,7 +819,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
 
       <form class="recipe-form" id="recipeForm" method="POST" enctype="multipart/form-data" action="" style="<?php echo $successMessage ? 'display: none;' : 'display: block;'; ?>">
         
-        <!-- Section 1: Basic Information -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-info-circle"></i> Recipe Info</h2>
 
@@ -942,20 +830,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
 
           <div class="form-group">
             <label for="categoryID">Recipe Category <span class="required">*</span></label>
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            <!-- ***********Display categories in dropdown menu******************8-->
-            
-            
             <select id="categoryID" name="categoryID" required>
               <option value="">Select a category</option>
               <?php foreach ($categories as $category): ?>
@@ -973,7 +847,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
           </div>
         </div>
 
-        <!-- Section 2: Recipe Image -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-camera"></i> Recipe Picture</h2>
 
@@ -989,7 +862,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
           </div>
         </div>
 
-        <!-- Section 3: Ingredients -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-list-ul"></i> Ingredients</h2>
 
@@ -1011,7 +883,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
           </button>
         </div>
 
-        <!-- Section 4: Preparation Steps -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-list-ol"></i> Instructions</h2>
 
@@ -1038,7 +909,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
           </button>
         </div>
 
-        <!-- Section 5: Video (Optional) -->
         <div class="form-section">
           <h2 class="section-title"><i class="fas fa-video"></i> Recipe Video (Optional)</h2>
 
@@ -1073,7 +943,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
           </div>
         </div>
 
-        <!-- Form Actions -->
         <div class="form-actions">
           <button type="submit" name="addRecipe" class="submit-btn">
             <i class="fas fa-save"></i> Save Recipe
@@ -1096,7 +965,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
 </div>
 
 <script>
-  // Main elements
   const recipeForm = document.getElementById('recipeForm');
   const ingredientsContainer = document.getElementById('ingredientsContainer');
   const stepsContainer = document.getElementById('stepsContainer');
@@ -1106,30 +974,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
   const recipeImage = document.getElementById('photoFileName');
   const fileNameDisplay = document.getElementById('file-name');
 
-  // Character counters
   const nameCount = document.getElementById('nameCount');
   const descCount = document.getElementById('descCount');
   const recipeNameInput = document.getElementById('name');
   const recipeDescInput = document.getElementById('description');
 
-  // Video options
   const videoOptions = document.querySelectorAll('input[name="videoOption"]');
   const urlInput = document.getElementById('urlInput');
   const uploadInput = document.getElementById('uploadInput');
 
-  // Character counter for recipe name
   recipeNameInput.addEventListener('input', function() {
     nameCount.textContent = this.value.length;
     nameCount.style.color = this.value.length > 50 ? '#FF9AA2' : '#B5EAD7';
   });
 
-  // Character counter for recipe description
   recipeDescInput.addEventListener('input', function() {
     descCount.textContent = this.value.length;
     descCount.style.color = this.value.length > 200 ? '#FF9AA2' : '#B5EAD7';
   });
 
-  // Recipe image upload with drag & drop
   uploadArea.addEventListener('click', function() {
     recipeImage.click();
   });
@@ -1141,8 +1004,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
       uploadArea.style.borderColor = '#B5EAD7';
       uploadArea.style.backgroundColor = 'rgba(181, 234, 215, 0.1)';
       uploadArea.classList.remove('required-missing');
-      
-      // Remove any existing error message
+
       const existingError = document.querySelector('.client-error-message');
       if (existingError) {
         existingError.remove();
@@ -1154,7 +1016,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     }
   });
 
-  // Drag and drop functionality
   uploadArea.addEventListener('dragover', function(e) {
     e.preventDefault();
     this.classList.add('dragover');
@@ -1175,8 +1036,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
       uploadArea.style.borderColor = '#B5EAD7';
       uploadArea.style.backgroundColor = 'rgba(181, 234, 215, 0.1)';
       uploadArea.classList.remove('required-missing');
-      
-      // Remove any existing error message
+
       const existingError = document.querySelector('.client-error-message');
       if (existingError) {
         existingError.remove();
@@ -1184,15 +1044,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     }
   });
 
-  // Function to show error message
   function showImageError() {
-    // Remove any existing error message
     const existingError = document.querySelector('.client-error-message');
     if (existingError) {
       existingError.remove();
     }
-    
-    // Create new error message
+
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message client-error-message';
     errorDiv.style.display = 'flex';
@@ -1201,19 +1058,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
       <i class="fas fa-exclamation-triangle"></i>
       <span>❌ Please upload a recipe image! The picture is required. 📸</span>
     `;
-    
-    // Insert error message before the form
+
     const recipeContainer = document.querySelector('.recipe-container');
     recipeContainer.insertBefore(errorDiv, recipeForm);
-    
-    // Add shake effect to upload area
+
     uploadArea.classList.add('required-missing');
     uploadArea.style.borderColor = '#FF9AA2';
-    
-    // Scroll to upload area
+
     uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-    // Auto remove error after 4 seconds
+
     setTimeout(() => {
       if (errorDiv.parentNode) {
         errorDiv.remove();
@@ -1222,9 +1075,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     }, 4000);
   }
 
-  // Client-side validation for image before submit
   recipeForm.addEventListener('submit', function(e) {
-    // Check if image is selected
     if (!recipeImage.files || recipeImage.files.length === 0) {
       e.preventDefault();
       showImageError();
@@ -1232,7 +1083,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     }
   });
 
-  // Add new ingredient
   let ingredientCount = 1;
 
   addIngredientBtn.addEventListener('click', function() {
@@ -1265,7 +1115,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     });
   });
 
-  // Add new step
   let stepCount = 1;
 
   addStepBtn.addEventListener('click', function() {
@@ -1303,7 +1152,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     }
   });
 
-  // Update step numbers
   function updateStepNumbers() {
     const stepCounters = document.querySelectorAll('.step-counter');
     stepCounters.forEach((counter, index) => {
@@ -1315,7 +1163,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     }
   }
 
-  // Show/hide video fields based on selection
   videoOptions.forEach(option => {
     option.addEventListener('change', function() {
       urlInput.classList.remove('active');
@@ -1329,12 +1176,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
     });
   });
 
-  // Cancel button
   document.getElementById('cancelBtn').addEventListener('click', function() {
     window.location.href = 'myrecipes.php';
   });
 
-  // Form reset
   document.getElementById('resetBtn').addEventListener('click', function(e) {
     e.preventDefault();
 
@@ -1351,7 +1196,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
 
       recipeForm.reset();
 
-      // Remove any error messages
       const existingError = document.querySelector('.client-error-message');
       if (existingError) {
         existingError.remove();
@@ -1394,12 +1238,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addRecipe'])) {
       }, 100);
     }
   });
-
-  function setActive(element) {
-    const links = document.querySelectorAll("nav a");
-    links.forEach(link => link.classList.remove("active"));
-    element.classList.add("active");
-  }
 </script>
 
 </body>
