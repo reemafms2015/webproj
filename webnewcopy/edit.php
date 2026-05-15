@@ -77,15 +77,17 @@ function cleanFileName($name) {
 
 function getUploadPath($type) {
     if ($type === 'image') {
-        $dir = 'uploads/images/';
+        $dir = 'images/recipes/';
     } elseif ($type === 'video') {
-        $dir = 'uploads/videos/';
+        $dir = 'videos/';
     } else {
-        $dir = 'uploads/';
+        $dir = '';
     }
+
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
+
     return $dir;
 }
 
