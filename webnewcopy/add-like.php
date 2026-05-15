@@ -3,13 +3,13 @@ session_start();
 include("db.php");
 
 if (!isset($_SESSION['userID'])) {
-    header("Location: login.php");
+    echo "false";
     exit();
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $recipeID = $_POST['recipeID'];
-    $userID = $_SESSION['userID'];
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['recipeID'])) {
+    $recipeID = (int) $_POST['recipeID'];
+    $userID = (int) $_SESSION['userID'];
 
     $sqlCheck = "SELECT * FROM likes WHERE userID = ? AND recipeID = ?";
     $stmtCheck = mysqli_prepare($conn, $sqlCheck);
@@ -21,13 +21,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $sqlInsert = "INSERT INTO likes (userID, recipeID) VALUES (?, ?)";
         $stmtInsert = mysqli_prepare($conn, $sqlInsert);
         mysqli_stmt_bind_param($stmtInsert, "ii", $userID, $recipeID);
-        mysqli_stmt_execute($stmtInsert);
-    }
 
-    header("Location: view-recipe.php?id=$recipeID&msg=Recipe liked successfully");
+        echo mysqli_stmt_execute($stmtInsert) ? "true" : "false";
+    } else {
+        echo "true";
+    }
     exit();
 }
 
-header("Location: index.html");
+echo "false";
 exit();
 ?>
