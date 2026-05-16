@@ -60,7 +60,10 @@ $user = $userResult->fetch_assoc();
 
 $storedPassword = $user["password"];
 
-if (!password_verify($password, $storedPassword) && $password !== $storedPassword) {
+if (
+    !password_verify($password, $storedPassword) &&
+    $password !== $storedPassword
+) {
     header("Location: login.html?error=Incorrect email or password");
     exit();
 }
@@ -71,10 +74,10 @@ $_SESSION["userType"] = $user["userType"];
 
 // Redirect based on type
 if (strtolower($user["userType"]) === "admin") {
-    header("Location: admin.php?success=Login successful");
+    header("Location: admin.php");
     exit();
 } else {
-    header("Location: user.php?success=Login successful");
+    header("Location: user.php");
     exit();
 }
 ?>
