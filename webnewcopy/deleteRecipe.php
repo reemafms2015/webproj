@@ -26,8 +26,8 @@ if (!$checkResult || mysqli_num_rows($checkResult) == 0) {
 
 $recipe = mysqli_fetch_assoc($checkResult);
 
-$photo = $recipe['photoFileName'];
-$video = $recipe['videoFilePath'];
+$photo = !empty($recipe['photoFileName']) ? "images/recipes/" . $recipe['photoFileName'] : "";
+$video = !empty($recipe['videoFilePath']) ? "videos/" . $recipe['videoFilePath'] : "";
 
 if (!empty($photo) && file_exists($photo)) {
     unlink($photo);
