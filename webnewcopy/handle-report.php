@@ -87,13 +87,16 @@ if ($action == "block") {
     while ($recipe = mysqli_fetch_assoc($resultRecipes)) {
         $currentRecipeID = $recipe['id'];
 
-        if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
-            unlink($recipe['photoFileName']);
-        }
+        $photoPath = !empty($recipe['photoFileName']) ? "images/recipes/" . $recipe['photoFileName'] : "";
+$videoPath = !empty($recipe['videoFilePath']) ? "videos/" . $recipe['videoFilePath'] : "";
 
-        if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath'])) {
-            unlink($recipe['videoFilePath']);
-        }
+if (!empty($photoPath) && file_exists($photoPath)) {
+    unlink($photoPath);
+}
+
+if (!empty($videoPath) && file_exists($videoPath)) {
+    unlink($videoPath);
+}
 
         $sqlDeleteIngredients = "DELETE FROM ingredients WHERE recipeID = ?";
         $stmtDeleteIngredients = mysqli_prepare($conn, $sqlDeleteIngredients);
