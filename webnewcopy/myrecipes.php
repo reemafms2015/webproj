@@ -52,25 +52,28 @@ $recipesResult = mysqli_query($conn, $recipesQuery);
 
 /* Use local image names if database image name is empty or missing */
 function getRecipePhoto($recipeName, $photoFileName) {
-    if (!empty($photoFileName) && file_exists(__DIR__ . "/" . $photoFileName)) {
-        return $photoFileName;
+
+    if (!empty($photoFileName)) {
+
+        if (file_exists(__DIR__ . "/uploads/images/" . $photoFileName)) {
+            return "uploads/images/" . $photoFileName;
+        }
+
+        return "images/recipes/" . $photoFileName;
     }
 
-    $name = strtolower(trim($recipeName));
+    return "";
+}
+function getCreatorPhoto($firstName, $creatorPhoto) {
 
-    if ($name === "bananapancake") {
-        return "banana-pancakes.png";
+    if (
+        !empty($creatorPhoto) &&
+        file_exists(__DIR__ . "/images/users/" . $creatorPhoto)
+    ) {
+        return "images/users/" . $creatorPhoto;
     }
 
-    if ($name === "fruityogurtcups") {
-        return "yogurt.png";
-    }
-
-    if ($name === "veggie omelette") {
-        return "omelette.png";
-    }
-
-    return "photo.png";
+    return "images/users/profile.png";
 }
 ?>
 <!DOCTYPE html>
