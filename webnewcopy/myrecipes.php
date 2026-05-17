@@ -64,17 +64,7 @@ function getRecipePhoto($recipeName, $photoFileName) {
 
     return "";
 }
-function getCreatorPhoto($firstName, $creatorPhoto) {
 
-    if (
-        !empty($creatorPhoto) &&
-        file_exists(__DIR__ . "/images/users/" . $creatorPhoto)
-    ) {
-        return "images/users/" . $creatorPhoto;
-    }
-
-    return "images/users/profile.png";
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
