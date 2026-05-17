@@ -362,7 +362,7 @@ function getRecipePhoto($recipeName, $photoFileName) {
                             <a href="edit.php?id=<?php echo $recipeID; ?>">Edit</a>
                         </td>
 
-                        <td>
+                       <td>
     <button class="deleteBtn" data-id="<?php echo $recipeID; ?>">
         Delete
     </button>
