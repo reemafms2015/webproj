@@ -116,36 +116,29 @@ $favouritesQuery = "
     ORDER BY recipe.id DESC
 ";
 $favouritesResult = mysqli_query($conn, $favouritesQuery);
-
 function getRecipePhoto($recipeName, $photoFileName) {
 
     if (!empty($photoFileName)) {
-        return "images/recipes/" . trim($photoFileName);
+
+        if (file_exists(__DIR__ . "/uploads/images/" . $photoFileName)) {
+            return "uploads/images/" . $photoFileName;
+        }
+
+        return "images/recipes/" . $photoFileName;
     }
 
-    $name = strtolower(trim($recipeName));
-
-    $defaultRecipes = [
-        "chicken & rice"   => "chicken-rice_56732.png",
-        "bananapancake"    => "banana-pancakes_0101.png",
-        "fruityogurtcups"  => "yogurt_0104.png",
-        "veggie omelette"  => "omelette_45609.png"
-    ];
-
-    if (isset($defaultRecipes[$name])) {
-        return "images/recipes/" . $defaultRecipes[$name];
-    }
-
-    return "images/recipes/photo.png";
+    return "";
 }
+
 function getCreatorPhoto($firstName, $creatorPhoto) {
 
-    
-    if (!empty($creatorPhoto)) {
-        return "images/users/" . trim($creatorPhoto);
+    if (
+        !empty($creatorPhoto) &&
+        file_exists(__DIR__ . "/images/users/" . $creatorPhoto)
+    ) {
+        return "images/users/" . $creatorPhoto;
     }
 
-    // if not
     return "images/users/profile.png";
 }
 ?>
@@ -431,7 +424,7 @@ a:hover {
                 <p><strong>Total Likes</strong></p>
                 <h2><?php echo $totalLikes; ?></h2>
 
-                <a href="myRecipes.php" class="mainBtn">🍽 My Recipes</a>
+                <a href="myrecipes.php" class="mainBtn">🍽 My Recipes</a>
             </div>
         </div>
 
