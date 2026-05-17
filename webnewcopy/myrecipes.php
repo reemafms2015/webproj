@@ -1,8 +1,4 @@
 <?php
-/* Show errors for testing */
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 /* Start session */
 session_start();
 
@@ -307,7 +303,7 @@ function getRecipePhoto($recipeName, $photoFileName) {
                     $instructionsQuery = "SELECT * FROM instructions WHERE recipeID = $recipeID ORDER BY stepOrder";
                     $instructionsResult = mysqli_query($conn, $instructionsQuery);
                     ?>
-                   <tr id="recipeRow<?php echo $recipeID; ?>">
+                    <tr id="recipeRow<?php echo $recipeID; ?>">
                         <td>
                             <a href="view-recipe.php?id=<?php echo $recipeID; ?>">
                                 <?php echo htmlspecialchars($recipe['name']); ?>
@@ -355,10 +351,10 @@ function getRecipePhoto($recipeName, $photoFileName) {
                             <a href="edit.php?id=<?php echo $recipeID; ?>">Edit</a>
                         </td>
 
-                       <td>
-    <button class="deleteBtn" data-id="<?php echo $recipeID; ?>">
+                        <td>
+    <a href="#" class="deleteBtn" data-id="<?php echo $recipeID; ?>">
         Delete
-    </button>
+    </a>
 </td>
                     </tr>
                 <?php } ?>
@@ -378,35 +374,46 @@ function getRecipePhoto($recipeName, $photoFileName) {
 <footer>
     © 2026 Kids Recipes — Made with 💖 for little ones
 </footer>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 <script>
-$(document).ready(function(){
+$(document).ready(function () {
 
-    $(".deleteBtn").click(function(){
+    $(".deleteBtn").click(function (e) {
 
-        var button = $(this);
-        var recipeID = button.data("id");
+        e.preventDefault();
 
-        if(confirm("Are you sure you want to delete this recipe?")){
-
-            $.post("deleteRecipe.php",
-                { recipeID: recipeID },
-                function(response){
-
-                    if(response.trim() == "true"){
-
-                        $("#recipeRow" + recipeID).remove();
-                        alert("Recipe deleted successfully");
-
-                    } else {
-
-                        alert("Delete failed");
-                    }
-                }
-            );
+        if (!confirm("Are you sure you want to delete this recipe?")) {
+            return;
         }
+
+        var link = $(this);
+        var recipeID = link.data("id");
+
+        $.ajax({
+
+            url: "deleteRecipe.php",
+            type: "POST",
+
+            data: {
+                recipeID: recipeID
+            },
+
+            success: function (response) {
+
+                if (response.trim() === "true") {
+
+                    link.closest("tr").remove();
+
+                } else {
+
+                    alert("Could not delete recipe.");
+                }
+            }
+        });
+
     });
+
 });
 </script>
 </body>
