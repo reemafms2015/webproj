@@ -1,29 +1,21 @@
 <?php
+ob_start();
 session_start();
 include("db.php");
 
+// Clear any accidental output before JSON
+ob_clean();
 
-
-
-
-//************************* For AJAX 
-$isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+// Always return JSON
+header('Content-Type: application/json');
 
 if (!isset($_SESSION['userID']) || !isset($_SESSION['userType']) || $_SESSION['userType'] != 'admin') {
-    if ($isAjax) {
-        echo json_encode(false);
-        exit();
-    }
-    header("Location: login.php?msg=You must log in as admin first");
+    echo json_encode(false);
     exit();
 }
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    if ($isAjax) {
-        echo json_encode(false);
-        exit();
-    }
-    header("Location: admin.php?msg=Invalid request");
+    echo json_encode(false);
     exit();
 }
 
@@ -33,11 +25,7 @@ $reportID = $_POST['reportID'];
 $action   = $_POST['action'];
 
 if ($action != "block" && $action != "dismiss") {
-    if ($isAjax) {
-        echo json_encode(false);
-        exit();
-    }
-    header("Location: admin.php?msg=Invalid action selected");
+    echo json_encode(false);
     exit();
 }
 
@@ -46,12 +34,7 @@ if ($action == "dismiss") {
     $stmtDeleteReport = mysqli_prepare($conn, $sqlDeleteReport);
     mysqli_stmt_bind_param($stmtDeleteReport, "i", $reportID);
     $success = mysqli_stmt_execute($stmtDeleteReport);
-
-    if ($isAjax) {
-        echo json_encode($success ? true : false);
-        exit();
-    }
-    header("Location: admin.php?msg=Report dismissed successfully");
+    echo json_encode($success ? true : false);
     exit();
 }
 
@@ -63,11 +46,7 @@ if ($action == "block") {
     $resultUser = mysqli_stmt_get_result($stmtUser);
 
     if (mysqli_num_rows($resultUser) == 0) {
-        if ($isAjax) {
-            echo json_encode(false);
-            exit();
-        }
-        header("Location: admin.php?msg=User not found");
+        echo json_encode(false);
         exit();
     }
 
@@ -87,16 +66,13 @@ if ($action == "block") {
     while ($recipe = mysqli_fetch_assoc($resultRecipes)) {
         $currentRecipeID = $recipe['id'];
 
-        $photoPath = !empty($recipe['photoFileName']) ? "images/recipes/" . $recipe['photoFileName'] : "";
-$videoPath = !empty($recipe['videoFilePath']) ? "videos/" . $recipe['videoFilePath'] : "";
+        if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
+            unlink($recipe['photoFileName']);
+        }
 
-if (!empty($photoPath) && file_exists($photoPath)) {
-    unlink($photoPath);
-}
-
-if (!empty($videoPath) && file_exists($videoPath)) {
-    unlink($videoPath);
-}
+        if (!empty($recipe['videoFilePath']) && file_exists($recipe['videoFilePath'])) {
+            unlink($recipe['videoFilePath']);
+        }
 
         $sqlDeleteIngredients = "DELETE FROM ingredients WHERE recipeID = ?";
         $stmtDeleteIngredients = mysqli_prepare($conn, $sqlDeleteIngredients);
@@ -168,11 +144,7 @@ if (!empty($videoPath) && file_exists($videoPath)) {
     mysqli_stmt_bind_param($stmtDeleteReport, "i", $reportID);
     mysqli_stmt_execute($stmtDeleteReport);
 
-    if ($isAjax) {
-        echo json_encode($success ? true : false);
-        exit();
-    }
-    header("Location: admin.php?msg=User blocked and all related data deleted successfully");
+    echo json_encode($success ? true : false);
     exit();
 }
 ?>
