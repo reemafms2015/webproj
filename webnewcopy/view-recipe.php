@@ -78,8 +78,16 @@ mysqli_stmt_execute($stmtReport);
 $reportResult = mysqli_stmt_get_result($stmtReport);
 $isReported = mysqli_num_rows($reportResult) > 0;
 
-$recipePhoto = !empty($recipe['photoFileName']) ? "images/recipes/" . $recipe['photoFileName'] : "images/recipes/default-recipe.png";
-$userPhoto = !empty($recipe['userPhoto']) ? "images/users/" . $recipe['userPhoto'] : "images/users/profile.png";
+$recipePhoto = !empty($recipe['photoFileName'])
+    ? (file_exists(__DIR__ . "/uploads/images/" . $recipe['photoFileName'])
+        ? "uploads/images/" . $recipe['photoFileName']
+        : "images/recipes/" . $recipe['photoFileName'])
+    : "";
+$userPhoto = !empty($recipe['userPhoto'])
+    ? (file_exists(__DIR__ . "/images/users/" . $recipe['userPhoto'])
+        ? "images/users/" . $recipe['userPhoto']
+        : "images/users/profile.png")
+    : "images/users/profile.png";
 ?>
 <!DOCTYPE html>
 <html lang="en">
