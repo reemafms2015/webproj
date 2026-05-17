@@ -79,16 +79,10 @@ a{color:inherit;text-decoration:none;} .recipe-link{color:#5D576B;font-weight:60
 <tbody>
 <?php if (mysqli_num_rows($reports) > 0) { ?>
 <?php while($row = mysqli_fetch_assoc($reports)) { ?>
-<?php $creatorPhoto = !empty($row['photoFileName']) ? $row['photoFileName'] : 'default-user.png'; ?>
+<?php $creatorPhoto = !empty($row['photoFileName']) ? "images/users/" . $row['photoFileName'] : 'images/users/profile.png'; ?>
 <tr id="report-row-<?php echo $row['reportID']; ?>">
 <td><a href="view-recipe.php?id=<?php echo $row['recipeID']; ?>"><div class="recipe-link"><?php echo $row['name']; ?></div></a></td>
-<td><div class="creator-cell"><div><div style="font-weight:900;"><?php echo $row['firstName'] . " " . $row['lastName']; ?></div><div class="small-note">Creator</div></div>
-<?php
-$creatorPhoto = !empty($row['photoFileName'])
-    ? "images/users/" . $row['photoFileName']
-    : "images/users/profile.png";
-?>
-<img class="avatar" src="<?php echo $creatorPhoto; ?>" alt="creator photo"></div></td>
+<td><div class="creator-cell"><div><div style="font-weight:900;"><?php echo $row['firstName'] . " " . $row['lastName']; ?></div><div class="small-note">Creator</div></div><img class="avatar" src="<?php echo $creatorPhoto; ?>" alt="creator photo"></div></td>
 <td>
     <div class="radio-group">
         <label class="radio-item"><input type="radio" name="action-<?php echo $row['reportID']; ?>" value="block" required> Block User</label>
@@ -142,23 +136,25 @@ $(document).ready(function () {
         // Disable button while processing
         btn.prop('disabled', true).text('Processing...');
 
-        $.ajax({
-            url: 'handle-report.php',
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                recipeID : recipeID,
-                userID   : userID,
-                reportID : reportID,
-                action   : action
-            },
-            success: function (response) {
-                if (response === true) {
-                    // Remove the row from the table
+        var formData = new FormData();
+        formData.append('recipeID', recipeID);
+        formData.append('userID', userID);
+        formData.append('reportID', reportID);
+        formData.append('action', action);
+
+        fetch('handle_report.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: formData
+        })
+        .then(function(response) {
+            return response.text();
+        })
+        .then(function(text) {
+                var result = text.trim().indexOf('true') !== -1;
+                if (result) {
                     var tbody = $('#reportsTable tbody');
                     $('#report-row-' + reportID).remove();
-
-                    // If no rows left, show "No reports found"
                     if (tbody.find('tr').length === 0) {
                         tbody.append('<tr id="no-reports-row"><td colspan="3" style="text-align:center;">No reports found.</td></tr>');
                     }
@@ -166,11 +162,9 @@ $(document).ready(function () {
                     alert('Something went wrong. Please try again.');
                     btn.prop('disabled', false).text('Submit');
                 }
-            },
-            error: function () {
-                alert('Request failed. Please try again.');
-                btn.prop('disabled', false).text('Submit');
-            }
+            })
+        .catch(function(err) {
+            alert('FETCH ERROR: ' + err);
         });
     });
 
