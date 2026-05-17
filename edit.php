@@ -1,12 +1,7 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+session_start();
 
-$conn = new mysqli("localhost", "root", "root", "recipedb", 8889);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include("db.php");
 
 $errorMessage = "";
 $successMessage = "";
@@ -191,10 +186,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateRecipe'])) {
             $destPath = $uploadDir . $newFileName;
             
             if (move_uploaded_file($fileTmpPath, $destPath)) {
-                if (!empty($recipe['photoFileName']) && file_exists($recipe['photoFileName'])) {
-                    unlink($recipe['photoFileName']);
+                if (!empty($recipe['photoFileName']) && file_exists("uploads/images/" . $recipe['photoFileName'])) {
+                    unlink("uploads/images/" . $recipe['photoFileName']);
                 }
-                $photoFileName = $destPath;
+                $photoFileName = $newFileName;
             } else {
                 $errorMessage = "❌ Failed to upload image.";
                 $photoError = true;
