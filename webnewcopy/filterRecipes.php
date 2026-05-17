@@ -44,13 +44,27 @@ $recipes = [];
 
 while ($row = mysqli_fetch_assoc($result)) {
 
-    $recipePhoto = !empty($row['photoFileName'])
-        ? "images/recipes/" . $row['photoFileName']
-        : "images/recipes/photo.png";
+ if (!empty($row['photoFileName'])) {
 
-    $creatorPhoto = !empty($row['creatorPhoto'])
-        ? "images/users/" . $row['creatorPhoto']
-        : "images/users/profile.png";
+    if (file_exists(__DIR__ . "/uploads/images/" . $row['photoFileName'])) {
+
+        $recipePhoto = "uploads/images/" . $row['photoFileName'];
+
+    } else {
+
+        $recipePhoto = "images/recipes/" . $row['photoFileName'];
+    }
+
+} else {
+
+    $recipePhoto = "";
+}
+
+$creatorPhoto =
+    !empty($row['creatorPhoto']) &&
+    file_exists(__DIR__ . "/images/users/" . $row['creatorPhoto'])
+    ? "images/users/" . $row['creatorPhoto']
+    : "images/users/profile.png";
 
     $recipes[] = [
         "id" => $row['id'],
