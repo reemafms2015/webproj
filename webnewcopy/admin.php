@@ -79,7 +79,12 @@ a{color:inherit;text-decoration:none;} .recipe-link{color:#5D576B;font-weight:60
 <tbody>
 <?php if (mysqli_num_rows($reports) > 0) { ?>
 <?php while($row = mysqli_fetch_assoc($reports)) { ?>
-<?php $creatorPhoto = !empty($row['photoFileName']) ? "images/users/" . $row['photoFileName'] : 'images/users/profile.png'; ?>
+<?php
+$creatorPhoto = (!empty($row['photoFileName']) &&
+    file_exists(__DIR__ . "/images/users/" . $row['photoFileName']))
+    ? "images/users/" . $row['photoFileName']
+    : "images/users/profile.png";
+?>
 <tr id="report-row-<?php echo $row['reportID']; ?>">
 <td><a href="view-recipe.php?id=<?php echo $row['recipeID']; ?>"><div class="recipe-link"><?php echo $row['name']; ?></div></a></td>
 <td><div class="creator-cell"><div><div style="font-weight:900;"><?php echo $row['firstName'] . " " . $row['lastName']; ?></div><div class="small-note">Creator</div></div><img class="avatar" src="<?php echo $creatorPhoto; ?>" alt="creator photo"></div></td>
